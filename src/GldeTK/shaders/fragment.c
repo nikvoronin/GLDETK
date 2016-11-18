@@ -2,7 +2,8 @@
 
 uniform float iGlobalTime;
 uniform vec3 iResolution;
-uniform vec4 iMouse;
+uniform vec3 CamRo;
+uniform vec3 CamTa;
 
 varying vec2 fragCoord;
 
@@ -134,6 +135,8 @@ float sdCylinder6(vec3 p, vec2 h)
 	return max(length6(p.xz) - h.x, abs(p.y) - h.y);
 }
 
+
+
 //----------------------------------------------------------------------
 
 float opS(float d1, float d2)
@@ -165,6 +168,21 @@ vec3 opTwist(vec3 p)
 }
 
 //----------------------------------------------------------------------
+float strangeFig(vec3 p)
+{
+	float Ex = exp(p.x);
+	float Ey = exp(p.y);
+	float zz = Ex * Ey;
+	float N = Ex * Ex + Ey * Ey;
+	float D = 1.0 + zz * zz;
+	zz = -4.0 * sin(p.z) * zz; // can be + or -
+	if (zz > 0.0)
+		N += zz;
+	else
+		D -= zz; // we bring it to the correct eq side :)
+
+	return log(N / D);
+}
 
 vec2 map(in vec3 pos)
 {
@@ -182,23 +200,25 @@ vec2 map(in vec3 pos)
 	res = opU(res, vec2(sdCylinder6(pos - vec3(1.0, 0.30, 2.0), vec2(0.1, 0.2)), 12.0));
 	res = opU(res, vec2(sdHexPrism(pos - vec3(-1.0, 0.20, 1.0), vec2(0.25, 0.05)), 17.0));
 
-	res = opU(res, vec2(opS(
-		udRoundBox(pos - vec3(-2.0, 0.2, 1.0), vec3(0.15), 0.05),
-		sdSphere(pos - vec3(-2.0, 0.2, 1.0), 0.25)), 13.0));
-	res = opU(res, vec2(opS(
-		sdTorus82(pos - vec3(-2.0, 0.2, 0.0), vec2(0.20, 0.1)),
-		sdCylinder(opRep(vec3(atan(pos.x + 2.0, pos.z) / 6.2831,
-			pos.y,
-			0.02 + 0.5*length(pos - vec3(-2.0, 0.2, 0.0))),
-			vec3(0.05, 1.0, 0.05)), vec2(0.02, 0.6))), 51.0));
-	res = opU(res, vec2(0.7*sdSphere(pos - vec3(-2.0, 0.25, -1.0), 0.2) +
-		0.03*sin(50.0*pos.x)*sin(50.0*pos.y)*sin(50.0*pos.z),
-		65.0));
-	res = opU(res, vec2(0.5*sdTorus(opTwist(pos - vec3(-2.0, 0.25, 2.0)), vec2(0.20, 0.05)), 46.7));
+	res = opU(res, vec2(strangeFig(pos - vec3(10.0, -1.0, 10.0)), 41.0));
 
-	res = opU(res, vec2(sdConeSection(pos - vec3(0.0, 0.35, -2.0), 0.15, 0.2, 0.1), 13.67));
+	//res = opU(res, vec2(opS(
+	//	udRoundBox(pos - vec3(-2.0, 0.2, 1.0), vec3(0.15), 0.05),
+	//	sdSphere(pos - vec3(-2.0, 0.2, 1.0), 0.25)), 13.0));
+	//res = opU(res, vec2(opS(
+	//	sdTorus82(pos - vec3(-2.0, 0.2, 0.0), vec2(0.20, 0.1)),
+	//	sdCylinder(opRep(vec3(atan(pos.x + 2.0, pos.z) / 6.2831,
+	//		pos.y,
+	//		0.02 + 0.5*length(pos - vec3(-2.0, 0.2, 0.0))),
+	//		vec3(0.05, 1.0, 0.05)), vec2(0.02, 0.6))), 51.0));
+	//res = opU(res, vec2(0.7*sdSphere(pos - vec3(-2.0, 0.25, -1.0), 0.2) +
+	//	0.03*sin(50.0*pos.x)*sin(50.0*pos.y)*sin(50.0*pos.z),
+	//	65.0));
+	//res = opU(res, vec2(0.5*sdTorus(opTwist(pos - vec3(-2.0, 0.25, 2.0)), vec2(0.20, 0.05)), 46.7));
 
-	res = opU(res, vec2(sdEllipsoid(pos - vec3(1.0, 0.35, -2.0), vec3(0.15, 0.2, 0.05)), 43.17));
+	//res = opU(res, vec2(sdConeSection(pos - vec3(0.0, 0.35, -2.0), 0.15, 0.2, 0.1), 13.67));
+
+	//res = opU(res, vec2(sdEllipsoid(pos - vec3(1.0, 0.35, -2.0), vec3(0.15, 0.2, 0.05)), 43.17));
 
 	return res;
 }
@@ -234,7 +254,7 @@ vec2 map(in vec3 pos)
 
 vec2 castRay(in vec3 ro, in vec3 rd)
 {
-	const float MAX_DIST = 10;
+	const float MAX_DIST = 30;
 	const float MIN_DIST = 0.002;
 	const float NONE = -1.0;
 
@@ -244,7 +264,7 @@ vec2 castRay(in vec3 ro, in vec3 rd)
 	float overstep = 0.0;
 	float phx = MAX_DIST;
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 100; i++)
 	{
 		if (h.x < MIN_DIST || t > MAX_DIST)
 			break;
@@ -382,13 +402,12 @@ void main(void)
 	vec2 q = fragCoord.xy / iResolution.xy;
 	vec2 p = -1.0 + 2.0*q;
 	p.x *= iResolution.x / iResolution.y;
-	vec2 mo = iMouse.xy / iResolution.xy;
-
-	float time = 15.0 + iGlobalTime;
 
 	// camera	
-	vec3 ro = vec3(0, 1, 0);// vec3(-0.5 + 3.5*cos(0.1*time + 6.0*mo.x), 1.0 + 2.0*mo.y, 0.5 + 3.5*sin(0.1*time + 6.0*mo.x));
-	vec3 ta = vec3(1, 1, 1);// vec3(-0.5, -0.4, 0.5);
+	//vec3 ro = 0.5 * vec3(-0.5 + 3.5*cos(0.1*time + 6.0*mo.x), 1.0 + 2.0*mo.y, 0.5 + 3.5*sin(0.1*time + 6.0*mo.x));
+	//vec3 ta = vec3(-0.5, 0.4, 0.5);
+	vec3 ro = CamRo;
+	vec3 ta = CamTa;
 
 	// camera-to-world transformation
 	mat3 ca = setCamera(ro, ta, 0.0);

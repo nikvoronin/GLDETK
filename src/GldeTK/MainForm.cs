@@ -6,6 +6,7 @@ using System.IO;
 using System.Reflection;
 using OpenTK.Graphics;
 using System.Diagnostics;
+using System.Drawing;
 
 namespace GldeTK
 {
@@ -16,8 +17,12 @@ namespace GldeTK
         const string VERTEX_FILENAME = "GldeTK.shaders.vertex.c";
         const string GEOMETRY_FILENAME = "GldeTK.shaders.geometry.c";
 
-        int FULLSCREEN_W = 800,
-            FULLSCREEN_H = 600;
+
+        Vector3 camRo = new Vector3(0, 1.0f, 0);
+        Vector3 camTa = new Vector3(1, 1.0f, 1);
+
+        int FULLSCREEN_W = 640,
+            FULLSCREEN_H = 480;
 
         int h_vertex,
             h_fragment,
@@ -25,8 +30,8 @@ namespace GldeTK
 
         int uf_iGlobalTime,
             uf_iResolution,
-            uf_PlayerPos,
-            uf_iMouse;
+            uf_CamRo,
+            uf_CamTa;
 
         public MainForm()
         {
@@ -34,16 +39,21 @@ namespace GldeTK
             KeyDown += GameForm_KeyDown;
             Mouse.Move += Mouse_Move;
             VSync = VSyncMode.On;
+
+            camTa.Normalize();
         }
 
-        int m_xd = 0, m_yd = 0;
+        bool firstMouse = false;
+        float lastX, lastY;
+        float yaw = -90.0f;
+        float pitch = 0.0f;
         private void Mouse_Move(object sender, MouseMoveEventArgs e)
         {
-            //if (e.Mouse.IsButtonDown(MouseButton.Left))
-            {
-                m_xd = e.X;
-                m_yd = e.Y;
-            }
+        }
+
+        float ToRadians(float degree)
+        {
+            return ((float)Math.PI / 180f) * degree;
         }
 
         Stopwatch stopwatch;
@@ -86,15 +96,29 @@ namespace GldeTK
 
             uf_iGlobalTime = GetUniformLocation("iGlobalTime");
             uf_iResolution = GetUniformLocation("iResolution");
-            uf_PlayerPos = GetUniformLocation("PlayerPos");
-            uf_iMouse = GetUniformLocation("iMouse");
+            uf_CamRo = GetUniformLocation("CamRo");
+            uf_CamTa = GetUniformLocation("CamTa");
+            //uf_iMouse = GetUniformLocation("iMouse");
         }
 
+        const float PLAYER_MOVE_SPEED = .1f;
+        Vector3 camFront = new Vector3(0.0f, 0.0f, -1.0f);
+        Vector3 camUp = new Vector3(0.0f, 1.0f, 0.0f);
         private void GameForm_KeyDown(object sender, KeyboardKeyEventArgs e)
         {
             switch (e.Key)
             {
                 case Key.W:
+                    camRo += camFront * PLAYER_MOVE_SPEED;
+                    break;     
+                case Key.S:
+                    camRo -= camFront * PLAYER_MOVE_SPEED;
+                    break;     
+                case Key.A:
+                    camRo -= Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
+                    break;     
+                case Key.D:
+                    camRo += Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
                     break;
                 case Key.Escape:
                     Exit();
@@ -104,11 +128,13 @@ namespace GldeTK
                     {
                         DisplayDevice.GetDisplay(DisplayIndex.Default).RestoreResolution();
                         WindowState = WindowState.Normal;
+                        CursorVisible = true;
                     }
                     else
                     {
                         DisplayDevice.GetDisplay(DisplayIndex.Default).ChangeResolution(FULLSCREEN_W, FULLSCREEN_H, 32, 60);
                         WindowState = WindowState.Fullscreen;
+                        CursorVisible = false;
                     }
                     break;
             }
@@ -121,6 +147,52 @@ namespace GldeTK
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
+
+            OnMouseMove();
+        }
+
+        Point mpoint = Point.Empty;
+        void OnMouseMove()
+        {
+            MouseState ms = Mouse.GetCursorState();
+            mpoint.X = ms.X;
+            mpoint.Y = ms.Y;
+
+            mpoint = PointToClient(mpoint);
+            float xpos = mpoint.X;
+            float ypos = mpoint.Y;
+
+            if (firstMouse)
+            {
+                lastX = xpos;
+                lastY = ypos;
+                firstMouse = false;
+            }
+
+            float xoffset = xpos - lastX;
+            float yoffset = lastY - ypos;
+            mxd = myd = 0;
+            lastX = xpos;
+            lastY = ypos;
+
+            float sensitivity = 1.05f;
+            xoffset *= sensitivity;
+            yoffset *= sensitivity;
+
+            yaw += xoffset;
+            pitch += yoffset;
+
+            if (pitch > 89.0f)
+                pitch = 89.0f;
+            if (pitch < -89.0f)
+                pitch = -89.0f;
+
+            Vector3 front = new Vector3();
+            front.X = (float)(Math.Cos(ToRadians(yaw)) * Math.Cos(ToRadians(pitch)));
+            front.Y = (float)(Math.Sin(ToRadians(pitch)));
+            front.Z = (float)(Math.Sin(ToRadians(yaw)) * Math.Cos(ToRadians(pitch)));
+            camFront = Vector3.Normalize(front);
+            camTa = camFront + camRo;
         }
 
         float iGlobalTime = 0;
@@ -141,8 +213,10 @@ namespace GldeTK
 
             GL.Uniform1(uf_iGlobalTime, iGlobalTime);
             GL.Uniform3(uf_iResolution, Width, Height, 0.0f);
-            //GL.Uniform3(uf_PlayerPos, 0, 0, 0.0f);
-            GL.Uniform4(uf_iMouse, m_xd, m_yd, 0f, 0f);
+            GL.Uniform3(uf_CamRo, camRo);
+            GL.Uniform3(uf_CamTa, camTa);
+            //GL.Uniform3(uf_CamRo, p_pos);
+            //GL.Uniform4(uf_iMouse, m_xd, m_yd, 0f, 0f);
 
             GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
 
