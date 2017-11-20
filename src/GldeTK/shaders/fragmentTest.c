@@ -217,23 +217,23 @@ vec2 map(in vec3 pos)
 	//res = opU(res, vec2(kTower(pos - vec3(10.0, -1.0, 10.0)), 41.0));
 	//res = opU(res, vec2(ScherkDe(pos - vec3(10.0, -1.0, 10.0)), 41.0));
 
-	res = opU(res, vec2(opS(
-		udRoundBox(pos - vec3(-2.0, 0.2, 1.0), vec3(0.15), 0.05),
-		sdSphere(pos - vec3(-2.0, 0.2, 1.0), 0.25)), 13.0));
-	res = opU(res, vec2(opS(
-		sdTorus82(pos - vec3(-2.0, 0.2, 0.0), vec2(0.20, 0.1)),
-		sdCylinder(opRep(vec3(atan(pos.x + 2.0, pos.z) / 6.2831,
-			pos.y,
-			0.02 + 0.5*length(pos - vec3(-2.0, 0.2, 0.0))),
-			vec3(0.05, 1.0, 0.05)), vec2(0.02, 0.6))), 51.0));
-	res = opU(res, vec2(0.7*sdSphere(pos - vec3(-2.0, 0.25, -1.0), 0.2) +
-		0.03*sin(50.0*pos.x)*sin(50.0*pos.y)*sin(50.0*pos.z),
-		65.0));
-	res = opU(res, vec2(0.5*sdTorus(opTwist(pos - vec3(-2.0, 0.25, 2.0)), vec2(0.20, 0.05)), 46.7));
+	//res = opU(res, vec2(opS(
+	//	udRoundBox(pos - vec3(-2.0, 0.2, 1.0), vec3(0.15), 0.05),
+	//	sdSphere(pos - vec3(-2.0, 0.2, 1.0), 0.25)), 13.0));
+	//res = opU(res, vec2(opS(
+	//	sdTorus82(pos - vec3(-2.0, 0.2, 0.0), vec2(0.20, 0.1)),
+	//	sdCylinder(opRep(vec3(atan(pos.x + 2.0, pos.z) / 6.2831,
+	//		pos.y,
+	//		0.02 + 0.5*length(pos - vec3(-2.0, 0.2, 0.0))),
+	//		vec3(0.05, 1.0, 0.05)), vec2(0.02, 0.6))), 51.0));
+	//res = opU(res, vec2(0.7*sdSphere(pos - vec3(-2.0, 0.25, -1.0), 0.2) +
+	//	0.03*sin(50.0*pos.x)*sin(50.0*pos.y)*sin(50.0*pos.z),
+	//	65.0));
+	//res = opU(res, vec2(0.5*sdTorus(opTwist(pos - vec3(-2.0, 0.25, 2.0)), vec2(0.20, 0.05)), 46.7));
 
-	res = opU(res, vec2(sdConeSection(pos - vec3(0.0, 0.35, -2.0), 0.15, 0.2, 0.1), 13.67));
+	//res = opU(res, vec2(sdConeSection(pos - vec3(0.0, 0.35, -2.0), 0.15, 0.2, 0.1), 13.67));
 
-	res = opU(res, vec2(sdEllipsoid(pos - vec3(1.0, 0.35, -2.0), vec3(0.15, 0.2, 0.05)), 43.17));
+	//res = opU(res, vec2(sdEllipsoid(pos - vec3(1.0, 0.35, -2.0), vec3(0.15, 0.2, 0.05)), 43.17));
 
 	return res;
 }
@@ -269,7 +269,7 @@ vec2 map(in vec3 pos)
 
 vec2 castRay(in vec3 ro, in vec3 rd)
 {
-	const float MAX_DIST = 100;
+	const float MAX_DIST = 50;
 	const float MIN_DIST = 0.002;
 	const float NONE = -1.0;
 
@@ -279,7 +279,7 @@ vec2 castRay(in vec3 ro, in vec3 rd)
 	float overstep = 0.0;
 	float phx = MAX_DIST;
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 50; i++)
 	{
 		if (h.x < MIN_DIST || t > MAX_DIST)
 			break;

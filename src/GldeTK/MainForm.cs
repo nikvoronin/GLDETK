@@ -4,7 +4,6 @@ using OpenTK.Graphics.OpenGL4;
 using System;
 using System.IO;
 using System.Reflection;
-using OpenTK.Graphics;
 using System.Diagnostics;
 using System.Drawing;
 
@@ -21,8 +20,8 @@ namespace GldeTK
         Vector3 camRo = new Vector3(0, 1.0f, 0);
         Vector3 camTa = new Vector3(1, 1.0f, 1);
 
-        int FULLSCREEN_W = 640,
-            FULLSCREEN_H = 480;
+        int FULLSCREEN_W = 800,
+            FULLSCREEN_H = 600;
 
         int h_vertex,
             h_fragment,
@@ -36,8 +35,6 @@ namespace GldeTK
         public MainForm()
         {
             Title = APP_NAME;
-            KeyDown += GameForm_KeyDown;
-            Mouse.Move += Mouse_Move;
             VSync = VSyncMode.On;
 
             camTa.Normalize();
@@ -47,9 +44,6 @@ namespace GldeTK
         float lastX, lastY;
         float yaw = -90.0f;
         float pitch = 0.0f;
-        private void Mouse_Move(object sender, MouseMoveEventArgs e)
-        {
-        }
 
         float ToRadians(float degree)
         {
@@ -101,44 +95,9 @@ namespace GldeTK
             //uf_iMouse = GetUniformLocation("iMouse");
         }
 
-        const float PLAYER_MOVE_SPEED = .1f;
+        const float PLAYER_MOVE_SPEED = .2f;
         Vector3 camFront = new Vector3(0.0f, 0.0f, -1.0f);
         Vector3 camUp = new Vector3(0.0f, 1.0f, 0.0f);
-        private void GameForm_KeyDown(object sender, KeyboardKeyEventArgs e)
-        {
-            switch (e.Key)
-            {
-                case Key.W:
-                    camRo += camFront * PLAYER_MOVE_SPEED;
-                    break;     
-                case Key.S:
-                    camRo -= camFront * PLAYER_MOVE_SPEED;
-                    break;     
-                case Key.A:
-                    camRo -= Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
-                    break;     
-                case Key.D:
-                    camRo += Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
-                    break;
-                case Key.Escape:
-                    Exit();
-                    break;
-                case Key.F11:
-                    if (WindowState == WindowState.Fullscreen)
-                    {
-                        DisplayDevice.GetDisplay(DisplayIndex.Default).RestoreResolution();
-                        WindowState = WindowState.Normal;
-                        CursorVisible = true;
-                    }
-                    else
-                    {
-                        DisplayDevice.GetDisplay(DisplayIndex.Default).ChangeResolution(FULLSCREEN_W, FULLSCREEN_H, 32, 60);
-                        WindowState = WindowState.Fullscreen;
-                        CursorVisible = false;
-                    }
-                    break;
-            }
-        }
 
         protected override void OnResize(EventArgs e)
         {
@@ -147,14 +106,56 @@ namespace GldeTK
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-
+            UpdateKeyInput();
             OnMouseMove();
         }
+
+        private void UpdateKeyInput()
+        {
+            KeyboardState state = Keyboard.GetState();
+
+            if(state.IsKeyDown(Key.W))
+                camRo += camFront * PLAYER_MOVE_SPEED;
+
+            if (state.IsKeyDown(Key.S))
+                camRo -= camFront * PLAYER_MOVE_SPEED;
+
+            if (state.IsKeyDown(Key.A))            
+                camRo -= Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
+
+            if (state.IsKeyDown(Key.D))
+                camRo += Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
+
+            if (state.IsKeyDown(Key.ShiftLeft))
+                camRo -= Vector3.Normalize(camUp) * PLAYER_MOVE_SPEED;
+
+            if (state.IsKeyDown(Key.Space))
+                camRo += Vector3.Normalize(camUp) * PLAYER_MOVE_SPEED;
+
+            if (state.IsKeyDown(Key.Escape))
+                Exit();
+
+            if (state.IsKeyDown(Key.F11))
+            {
+                if (WindowState == WindowState.Fullscreen)
+                {
+                    DisplayDevice.GetDisplay(DisplayIndex.Default).RestoreResolution();
+                    WindowState = WindowState.Normal;
+                    CursorVisible = true;
+                }
+                else
+                {
+                    DisplayDevice.GetDisplay(DisplayIndex.Default).ChangeResolution(FULLSCREEN_W, FULLSCREEN_H, 32, 60);
+                    WindowState = WindowState.Fullscreen;
+                    CursorVisible = false;
+                }
+            } // if state F11
+        } // UpdateKeyInput()
 
         Point mpoint = Point.Empty;
         void OnMouseMove()
         {
-            MouseState ms = Mouse.GetCursorState();
+            MouseState ms = Mouse.GetState();
             mpoint.X = ms.X;
             mpoint.Y = ms.Y;
 
@@ -171,11 +172,11 @@ namespace GldeTK
 
             float xoffset = xpos - lastX;
             float yoffset = lastY - ypos;
-            mxd = myd = 0;
+
             lastX = xpos;
             lastY = ypos;
 
-            float sensitivity = 1.05f;
+            float sensitivity = 0.7f;
             xoffset *= sensitivity;
             yoffset *= sensitivity;
 
@@ -193,6 +194,8 @@ namespace GldeTK
             front.Z = (float)(Math.Sin(ToRadians(yaw)) * Math.Cos(ToRadians(pitch)));
             camFront = Vector3.Normalize(front);
             camTa = camFront + camRo;
+
+            
         }
 
         float iGlobalTime = 0;
