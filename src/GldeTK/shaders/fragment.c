@@ -156,7 +156,7 @@ float opA(float d1, float d2)
 
 vec2 opU(vec2 d1, vec2 d2)
 {
-	return (d1.x<d2.x) ? d1 : d2;
+	return (d1.x < d2.x) ? d1 : d2;
 }
 
 vec3 opRep(vec3 p, vec3 c)
@@ -204,9 +204,9 @@ float kTower(vec3 p)
 
 float menger(in vec3 p)
 {
-	p = opRep(p, vec3(5));
+	p = opRep(p, vec3(15));
 
-	float d = sdBox(p, vec3(1.0));
+	float d = sdBox(p, vec3(6));
 	vec2 res = vec2(d, 1.0);
 
 	float s = 1.0;
@@ -252,18 +252,26 @@ float sdPlaneSin(vec3 p)
 	return p.y + cos(p.x) * sin(p.z) * 0.3;
 }
 
+float fOpUnionRound(float a, float b, float r) {
+	vec2 u = max(vec2(r - a, r - b), vec2(0));
+	return max(r, min(a, b)) - length(u);
+}
 
 vec2 map(in vec3 pos)
 {
 	/// blob
-	//vec2 res = vec2(sdPlane(pos), 1.0);
-	//res =
-	//	opU(res, vec2(
-	//		fBlob(pos - vec3(0.0, 2.0, 0.0)), 17.0));
+	vec2 res = vec2(sdPlaneSin(pos), 1.0);
+	res =
+		opU(res, vec2(
+			fBlob(pos - vec3(0.0, 2.0, 0.0)) + sin(iGlobalTime) * 0.4, 17.0));
 
 	///a valley of mengers
-	vec2 res = vec2(sdPlaneSin(pos), 1.0);
-	res = opU(res, vec2(menger(pos), 17.0));
+	//vec2 res = vec2(sdPlaneSin(pos), 1.0);
+	//res = opU(res, vec2(menger(vec3(pos.x, pos.y - sin(iGlobalTime) * 0.02, pos.z)), 15.0));
+	//vec3 repp = opRep(pos, vec3(5));
+	////float blob = fBlob(repp);// +sin(iGlobalTime) * 0.4;
+	//float blob = sdSphere(repp, 1.5);
+	//res.x = fOpUnionRound(res.x, blob, 0.2);
 
 	/// boxes
 	//vec3 repp = opRep(pos, vec3(5));
@@ -317,18 +325,18 @@ vec2 map(in vec3 pos)
 	return res;
 }
 
-vec2 castRay11111111(in vec3 ro, in vec3 rd)
+vec2 castRay1111111111(in vec3 ro, in vec3 rd)
 {
 	float tmin = 0.0002;
-	float tmax = 1000.0;
+	float tmax = 100.0;
 
 	float precis = 0.0002;
 	float t = tmin;
 	float m = -1.0;
 	for (int i = 0; i < 50; i++)
 	{
-		vec2 res = map(ro + rd*t);
-		if (res.x<precis || t>tmax) break;
+		vec2 res = map(ro + rd * t);
+		if (res.x < precis || t > tmax) break;
 		t += res.x;
 		m = res.y;
 	}
@@ -381,7 +389,7 @@ float softshadow(in vec3 ro, in vec3 rd, in float mint, in float tmax)
 {
 	float res = 1.0;
 	float t = mint;
-	for (int i = 0; i<16; i++)
+	for (int i = 0; i < 64; i++)
 	{
 		float h = map(ro + rd*t).x;
 		res = min(res, 8.0*h / t);
@@ -417,9 +425,6 @@ float calcAO(in vec3 pos, in vec3 nor)
 	return clamp(1.0 - 3.0*occ, 0.0, 1.0);
 }
 
-
-
-
 vec3 render(in vec3 ro, in vec3 rd)
 {
 	vec3 col = vec3(0.7, 0.9, 1.0) + rd.y*0.8;
@@ -452,8 +457,8 @@ vec3 render(in vec3 ro, in vec3 rd)
 		float fre = pow(clamp(1.0 + dot(nor, rd), 0.0, 1.0), 2.0);
 		float spe = pow(clamp(dot(ref, lig), 0.0, 1.0), 16.0);
 
-		dif *= softshadow(pos, lig, 0.02, 2.5);
-		dom *= softshadow(pos, ref, 0.02, 2.5);
+		dif *= softshadow(pos, lig, 0.02, 25);
+		dom *= softshadow(pos, ref, 0.02, 25);
 
 		vec3 lin = vec3(0.0);
 		lin += 1.20*dif*vec3(1.00, 0.85, 0.55);
