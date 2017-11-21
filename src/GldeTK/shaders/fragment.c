@@ -204,13 +204,13 @@ float kTower(vec3 p)
 
 float menger(in vec3 p)
 {
-	p = opRep(p, vec3(3));
+	p = opRep(p, vec3(5));
 
 	float d = sdBox(p, vec3(1.0));
 	vec2 res = vec2(d, 1.0);
 
 	float s = 1.0;
-	for (int m = 0; m < 6; m++)
+	for (int m = 0; m < 3; m++)
 	{
 		vec3 a = mod(p*s, 2.0) - 1.0;
 		s *= 3.0;
@@ -247,17 +247,23 @@ float fBlob(vec3 p) {
 	return l - 1.5 - 0.2 * (1.5 / 2.)* cos(min(sqrt(1.01 - b / l)*(PI / 0.25), PI));
 }
 
+float sdPlaneSin(vec3 p)
+{
+	return p.y + cos(p.x) * sin(p.z) * 0.3;
+}
+
+
 vec2 map(in vec3 pos)
 {
 	/// blob
-	vec2 res = vec2(sdPlane(pos), 1.0);
-	res =
-		opU(res, vec2(
-			fBlob(pos - vec3(0.0, 2.0, 0.0)), 17.0));
+	//vec2 res = vec2(sdPlane(pos), 1.0);
+	//res =
+	//	opU(res, vec2(
+	//		fBlob(pos - vec3(0.0, 2.0, 0.0)), 17.0));
 
 	///a valley of mengers
-	//vec2 res = vec2(sdPlane(pos), 1.0);
-	//res = opU(res, vec2(menger(pos), 17.0));
+	vec2 res = vec2(sdPlaneSin(pos), 1.0);
+	res = opU(res, vec2(menger(pos), 17.0));
 
 	/// boxes
 	//vec3 repp = opRep(pos, vec3(5));
@@ -311,23 +317,15 @@ vec2 map(in vec3 pos)
 	return res;
 }
 
-vec2 castRay22222(in vec3 ro, in vec3 rd)
+vec2 castRay11111111(in vec3 ro, in vec3 rd)
 {
 	float tmin = 0.0002;
 	float tmax = 1000.0;
 
-#if 0
-	float tp1 = (0.0 - ro.y) / rd.y; if (tp1>0.0) tmax = min(tmax, tp1);
-	float tp2 = (1.6 - ro.y) / rd.y; if (tp2>0.0) {
-		if (ro.y>1.6) tmin = max(tmin, tp2);
-		else           tmax = min(tmax, tp2);
-	}
-#endif
-
 	float precis = 0.0002;
 	float t = tmin;
 	float m = -1.0;
-	for (int i = 0; i < 30; i++)
+	for (int i = 0; i < 50; i++)
 	{
 		vec2 res = map(ro + rd*t);
 		if (res.x<precis || t>tmax) break;
@@ -344,15 +342,13 @@ vec2 castRay(in vec3 ro, in vec3 rd)
 {
 	const float MAX_DIST = 100;
 	const float MIN_DIST = 0.0002;
-	const float NONE = -1.0;
 
 	float t = 0.0;
-	vec2 res = vec2(-1.0);
 	vec2 h = vec2(1.0);
 	float overstep = 0.0;
 	float phx = MAX_DIST;
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 50; i++)
 	{
 		if (h.x < MIN_DIST || t > MAX_DIST)
 			break;
@@ -361,8 +357,8 @@ vec2 castRay(in vec3 ro, in vec3 rd)
 
 		if (h.x > overstep)
 		{
-			overstep = h.x * min(1.0, 0.1 * h.x / phx);
-			t += h.x * 0.3 + overstep;
+			overstep = h.x * min(1.0, 0.5 * h.x / phx);
+			t += h.x * 0.5 + overstep;
 			phx = h.x;
 		}
 		else
@@ -372,14 +368,12 @@ vec2 castRay(in vec3 ro, in vec3 rd)
 			h.x = 1.0;
 			overstep = 0.0;
 		}
-
-		res = vec2(t, h.y);
 	}
 
 	if (t > MAX_DIST)
-		res = vec2(NONE);
+		h.y = -1.0;
 
-	return res;
+	return vec2(t, h.y);
 }
 
 
@@ -434,7 +428,7 @@ vec3 render(in vec3 ro, in vec3 rd)
 	float m = res.y;
 	if (m > -0.5)
 	{
-		vec3 pos = ro + t*rd;
+		vec3 pos = ro + t * rd;
 		vec3 nor = calcNormal(pos);
 		vec3 ref = reflect(rd, nor);
 
@@ -450,7 +444,7 @@ vec3 render(in vec3 ro, in vec3 rd)
 		// lighitng        
 		float occ = calcAO(pos, nor);
 		//vec3  lig = normalize(vec3(-0.6, 0.7, -0.5));
-		vec3  lig = normalize(vec3(cos(iGlobalTime *0.3), abs(sin(iGlobalTime *0.3)), cos(iGlobalTime *0.3) * sin(iGlobalTime *0.3)));
+		vec3  lig = normalize(vec3(cos(iGlobalTime *0.1), abs(sin(iGlobalTime *0.1)), cos(iGlobalTime *0.1) * sin(iGlobalTime *0.1)));
 		float amb = clamp(0.5 + 0.5*nor.y, 0.0, 1.0);
 		float dif = clamp(dot(nor, lig), 0.0, 1.0);
 		float bac = clamp(dot(nor, normalize(vec3(-lig.x, 0.0, -lig.z))), 0.0, 1.0)*clamp(1.0 - pos.y, 0.0, 1.0);
@@ -497,7 +491,7 @@ void main(void)
 
 	// ray direction
 	vec2 q = fragCoord.xy / iResolution.xy;
-	vec2 p = -1.0 + 2.0*q;
+	vec2 p = -1.0 + 2.0 * q;
 	p.x *= iResolution.x / iResolution.y;
 
 	vec3 rd = ca * normalize(vec3(p.xy, 2.0));

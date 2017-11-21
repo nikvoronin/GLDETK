@@ -17,8 +17,8 @@ namespace GldeTK
         const string GEOMETRY_FILENAME = "GldeTK.shaders.geometry.c";
 
 
-        Vector3 camRo = new Vector3(0, 1.0f, 0);
-        Vector3 camTa = new Vector3(1, 1.0f, 1);
+        Vector3 camRo = new Vector3(0.0f, 1.0f, 0);
+        Vector3 camTa = new Vector3(0, 0.0f, 0);
 
         int FULLSCREEN_W = 800,
             FULLSCREEN_H = 600;
@@ -36,14 +36,11 @@ namespace GldeTK
         {
             Title = APP_NAME;
             VSync = VSyncMode.On;
-
-            camTa.Normalize();
         }
 
-        bool firstMouse = false;
         float lastX, lastY;
-        float yaw = -90.0f;
-        float pitch = 0.0f;
+        float yaw;
+        float pitch;
 
         float ToRadians(float degree)
         {
@@ -163,12 +160,6 @@ namespace GldeTK
             float xpos = mpoint.X;
             float ypos = mpoint.Y;
 
-            if (firstMouse)
-            {
-                lastX = xpos;
-                lastY = ypos;
-                firstMouse = false;
-            }
 
             float xoffset = xpos - lastX;
             float yoffset = lastY - ypos;
@@ -193,9 +184,7 @@ namespace GldeTK
             front.Y = (float)(Math.Sin(ToRadians(pitch)));
             front.Z = (float)(Math.Sin(ToRadians(yaw)) * Math.Cos(ToRadians(pitch)));
             camFront = Vector3.Normalize(front);
-            camTa = camFront + camRo;
-
-            
+            camTa = camFront + camRo;            
         }
 
         float iGlobalTime = 0;
@@ -218,8 +207,6 @@ namespace GldeTK
             GL.Uniform3(uf_iResolution, Width, Height, 0.0f);
             GL.Uniform3(uf_CamRo, camRo);
             GL.Uniform3(uf_CamTa, camTa);
-            //GL.Uniform3(uf_CamRo, p_pos);
-            //GL.Uniform4(uf_iMouse, m_xd, m_yd, 0f, 0f);
 
             GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
 
