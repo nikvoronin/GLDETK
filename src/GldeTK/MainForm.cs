@@ -95,6 +95,7 @@ namespace GldeTK
         }
 
         const float PLAYER_MOVE_SPEED = .2f;
+        const float MOUSE_SENSITIVITY = .3f;
         Vector3 camFront = new Vector3(0.0f, 0.0f, -1.0f);
         Vector3 camUp = new Vector3(0.0f, 1.0f, 0.0f);
 
@@ -109,6 +110,13 @@ namespace GldeTK
             OnMouseMove();
         }
 
+        private bool IsKeyPressed(Key key)
+        {
+            KeyboardState state = Keyboard.GetState();
+            return state.IsKeyUp(key) && lastState.IsKeyDown(key);
+        }
+
+        KeyboardState lastState = new KeyboardState();
         private void UpdateKeyInput()
         {
             KeyboardState state = Keyboard.GetState();
@@ -131,62 +139,56 @@ namespace GldeTK
             if (state.IsKeyDown(Key.Space))
                 camRo += Vector3.Normalize(camUp) * PLAYER_MOVE_SPEED;
 
-            if (state.IsKeyDown(Key.Escape))
+            if (IsKeyPressed(Key.Escape))
                 Exit();
 
-            if (state.IsKeyDown(Key.F11))
+            if (IsKeyPressed(Key.F11))
             {
                 if (WindowState == WindowState.Fullscreen)
                 {
-                    DisplayDevice.GetDisplay(DisplayIndex.Default).RestoreResolution();
+                    DisplayDevice
+                        .GetDisplay(DisplayIndex.Default)
+                        .RestoreResolution();
+
                     WindowState = WindowState.Normal;
                     CursorVisible = true;
                 }
                 else
                 {
-                    DisplayDevice.GetDisplay(DisplayIndex.Default).ChangeResolution(FULLSCREEN_W, FULLSCREEN_H, 32, 60);
+                    DisplayDevice
+                        .GetDisplay(DisplayIndex.Default)
+                        .ChangeResolution(FULLSCREEN_W, FULLSCREEN_H, 32, 60);
+
                     WindowState = WindowState.Fullscreen;
                     CursorVisible = false;
                 }
             } // if state F11
+
+            lastState = state;
         } // UpdateKeyInput()
 
-        Point mpoint = Point.Empty;
         void OnMouseMove()
         {
             MouseState ms = Mouse.GetState();
-            mpoint.X = ms.X;
-            mpoint.Y = ms.Y;
 
-            mpoint = PointToClient(mpoint);
-            float xpos = mpoint.X;
-            float ypos = mpoint.Y;
-
-
-            float xoffset = xpos - lastX;
-            float yoffset = lastY - ypos;
-
-            lastX = xpos;
-            lastY = ypos;
-
-            float sensitivity = 0.7f;
-            xoffset *= sensitivity;
-            yoffset *= sensitivity;
-
-            yaw += xoffset;
-            pitch += yoffset;
+            yaw += (ms.X - lastX) * MOUSE_SENSITIVITY;
+            pitch += (lastY - ms.Y) * MOUSE_SENSITIVITY;
 
             if (pitch > 89.0f)
                 pitch = 89.0f;
+
             if (pitch < -89.0f)
                 pitch = -89.0f;
 
-            Vector3 front = new Vector3();
-            front.X = (float)(Math.Cos(ToRadians(yaw)) * Math.Cos(ToRadians(pitch)));
-            front.Y = (float)(Math.Sin(ToRadians(pitch)));
-            front.Z = (float)(Math.Sin(ToRadians(yaw)) * Math.Cos(ToRadians(pitch)));
-            camFront = Vector3.Normalize(front);
-            camTa = camFront + camRo;            
+            camFront.X = (float)(Math.Cos(ToRadians(yaw)) * Math.Cos(ToRadians(pitch)));
+            camFront.Y = (float)(Math.Sin(ToRadians(pitch)));
+            camFront.Z = (float)(Math.Sin(ToRadians(yaw)) * Math.Cos(ToRadians(pitch)));
+            camFront.NormalizeFast();
+
+            camTa = camFront + camRo;
+
+            lastX = ms.X;
+            lastY = ms.Y;
         }
 
         float iGlobalTime = 0;
