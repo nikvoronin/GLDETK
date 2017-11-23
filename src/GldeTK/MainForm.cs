@@ -20,8 +20,8 @@ namespace GldeTK
         Vector3 camRo = new Vector3(0.0f, 1.0f, 0);
         Vector3 camTa = new Vector3(0, 0.0f, 0);
 
-        int FULLSCREEN_W = 1920,
-            FULLSCREEN_H = 1080;
+        int FULLSCREEN_W = 800,
+            FULLSCREEN_H = 600;
 
         int h_vertex,
             h_fragment,
@@ -95,9 +95,8 @@ namespace GldeTK
         }
 
         const float PLAYER_MOVE_SPEED = .2f;
-        const float MOUSE_SENSITIVITY = .3f;
         Vector3 camFront = new Vector3(0.0f, 0.0f, -1.0f);
-        Vector3 camUp = new Vector3(0.0f, 1.0f, 0.0f);
+        Vector3 camUp = new Vector3(0.0f, 1.0f, 0.0f).Normalized();
 
         protected override void OnResize(EventArgs e)
         {
@@ -134,12 +133,12 @@ namespace GldeTK
                 camRo += Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
 
             if (state.IsKeyDown(Key.ShiftLeft))
-                camRo -= Vector3.Normalize(camUp) * PLAYER_MOVE_SPEED;
+                camRo -= camUp * PLAYER_MOVE_SPEED;
 
             if (state.IsKeyDown(Key.Space))
-                camRo += Vector3.Normalize(camUp) * PLAYER_MOVE_SPEED;
+                camRo += camUp * PLAYER_MOVE_SPEED;
 
-            if (IsKeyPressed(Key.Escape))
+            if (state.IsKeyDown(Key.Escape))
                 Exit();
 
             if (IsKeyPressed(Key.F11))
@@ -167,22 +166,26 @@ namespace GldeTK
             lastState = state;
         } // UpdateKeyInput()
 
+        const float MOUSE_SENSITIVITY = .003f;
+        const float PI = 3.14152f;
+        const float PID2 = PI / 2f;
+
         void OnMouseMove()
         {
             MouseState ms = Mouse.GetState();
 
-            yaw += (ms.X - lastX) * MOUSE_SENSITIVITY;
+            yaw   += (ms.X - lastX) * MOUSE_SENSITIVITY;
             pitch += (lastY - ms.Y) * MOUSE_SENSITIVITY;
 
-            if (pitch > 89.0f)
-                pitch = 89.0f;
+            if (pitch > PID2)
+                pitch = PID2;
+            else
+                if (pitch < -PID2)
+                    pitch = -PID2;
 
-            if (pitch < -89.0f)
-                pitch = -89.0f;
-
-            camFront.X = (float)(Math.Cos(ToRadians(yaw)) * Math.Cos(ToRadians(pitch)));
-            camFront.Y = (float)(Math.Sin(ToRadians(pitch)));
-            camFront.Z = (float)(Math.Sin(ToRadians(yaw)) * Math.Cos(ToRadians(pitch)));
+            camFront.X = (float)(Math.Cos(yaw) * Math.Cos(pitch));
+            camFront.Y = (float)(Math.Sin(pitch));
+            camFront.Z = (float)(Math.Sin(yaw) * Math.Cos(pitch));
             camFront.NormalizeFast();
 
             camTa = camFront + camRo;

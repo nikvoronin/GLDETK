@@ -249,12 +249,17 @@ float fBlob(vec3 p) {
 
 float sdPlaneSin(vec3 p)
 {
-	return p.y + cos(p.x) * sin(p.z) * 0.3;
+	return p.y + cos(p.x - iGlobalTime * 0.1) * sin(p.z - iGlobalTime * 0.1) * 0.3;
 }
 
 float fOpUnionRound(float a, float b, float r) {
 	vec2 u = max(vec2(r - a, r - b), vec2(0));
 	return max(r, min(a, b)) - length(u);
+}
+
+float fOpUnionSoft(float a, float b, float r) {
+	float e = max(r - abs(a - b), 0.);
+	return min(a, b) - e*e*0.25 / r;
 }
 
 float mbox(vec3 p)
@@ -393,12 +398,15 @@ vec2 map(in vec3 pos)
 	//		fBlob(pos - vec3(0.0, 2.0, 0.0)) + sin(iGlobalTime) * 0.4, 49.0));
 
 	///a valley of mengers
+	vec3 repp = opRep(vec3(pos.x, pos.y - iGlobalTime * 0.5, pos.z), vec3(20));
+	float blob = sdSphere(repp, 1.5);
+
 	vec2 res = vec2(sdPlaneSin(pos), 1.0);
 	res = opU(res, vec2(menger(vec3(pos.x, pos.y - sin(iGlobalTime) * 0.02, pos.z)), 15.0));
-	vec3 repp = opRep(pos, vec3(7));
+
+	res.x = fOpUnionSoft(res.x, blob, 2.0);
+
 	//float blob = fBlob(repp);// +sin(iGlobalTime) * 0.4;
-	float blob = sdSphere(repp, 1.5);
-	res.x = fOpUnionRound(res.x, blob, 0.2);
 
 	/// boxes
 	//vec3 repp = opRep(pos, vec3(5));
@@ -516,12 +524,12 @@ float softshadow(in vec3 ro, in vec3 rd, in float mint, in float tmax)
 {
 	float res = 1.0;
 	float t = mint;
-	for (int i = 0; i < 64; i++)
+	for (int i = 0; i < 16; i++)
 	{
 		float h = map(ro + rd*t).x;
 		res = min(res, 8.0*h / t);
 		t += clamp(h, 0.02, 0.10);
-		if (h<0.0002 || t>tmax) break;
+		if (h<0.001 || t>tmax) break;
 	}
 	return clamp(res, 0.0, 1.0);
 
