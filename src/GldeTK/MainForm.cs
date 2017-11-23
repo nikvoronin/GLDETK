@@ -20,8 +20,8 @@ namespace GldeTK
         Vector3 camRo = new Vector3(0.0f, 1.0f, 0);
         Vector3 camTa = new Vector3(0, 0.0f, 0);
 
-        int FULLSCREEN_W = 800,
-            FULLSCREEN_H = 600;
+        int FULLSCREEN_W = 1920,
+            FULLSCREEN_H = 1080;
 
         int h_vertex,
             h_fragment,
