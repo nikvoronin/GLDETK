@@ -398,7 +398,7 @@ vec2 map(in vec3 pos)
 	//		fBlob(pos - vec3(0.0, 2.0, 0.0)) + sin(iGlobalTime) * 0.4, 49.0));
 
 	///a valley of mengers
-	vec3 repp = opRep(vec3(pos.x, pos.y - iGlobalTime * 0.5, pos.z), vec3(20));
+	vec3 repp = opRep(vec3(pos.x - 5, pos.y - iGlobalTime * 0.5, pos.z - 5), vec3(23));
 	float blob = sdSphere(repp, 1.5);
 
 	vec2 res = vec2(sdPlaneSin(pos), 1.0);
