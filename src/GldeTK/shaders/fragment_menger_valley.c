@@ -20,6 +20,11 @@ float sdPlane(vec3 p)
 	return p.y;
 }
 
+float sdPlaneX(vec3 p)
+{
+	return p.x;
+}
+
 float sdSphere(vec3 p, float s)
 {
 	return length(p) - s;
@@ -151,7 +156,7 @@ float opA(float d1, float d2)
 
 vec2 opU(vec2 d1, vec2 d2)
 {
-	return (d1.x<d2.x) ? d1 : d2;
+	return (d1.x < d2.x) ? d1 : d2;
 }
 
 vec3 opRep(vec3 p, vec3 c)
@@ -197,26 +202,243 @@ float kTower(vec3 p)
 	return abs(log(n / d)) - 0.05;
 }
 
+float menger(in vec3 p)
+{
+	p = opRep(p, vec3(10));
+
+	float d = sdBox(p, vec3(2));
+	vec2 res = vec2(d, 1.0);
+
+	float s = 1.0;
+	for (int m = 0; m < 4; m++)
+	{
+		vec3 a = mod(p*s, 2.0) - 1.0;
+		s *= 3.0;
+		vec3 r = abs(1.0 - 3.0*abs(a));
+		float da = max(r.x, r.y);
+		float db = max(r.y, r.z);
+		float dc = max(r.z, r.x);
+		float c = (min(da, min(db, dc)) - 1.0) / s;
+
+		if (c>d)
+		{
+			d = c;
+			res = vec2(d, min(res.y, 0.2*da*db*dc));
+		}
+	}
+
+	return res.x;
+}
+
+#define PI 3.14159265
+#define TAU (2*PI)
+#define PHI (sqrt(5.)*0.5 + 0.5)
+
+float fBlob(vec3 p) {
+	p = abs(p);
+	if (p.x < max(p.y, p.z)) p = p.yzx;
+	if (p.x < max(p.y, p.z)) p = p.yzx;
+	float b = max(max(max(
+		dot(p, normalize(vec3(1, 1, 1))),
+		dot(p.xz, normalize(vec2(PHI + 1., 1.)))),
+		dot(p.yx, normalize(vec2(1., PHI)))),
+		dot(p.xz, normalize(vec2(1., PHI))));
+	float l = length(p);
+	return l - 1.5 - 0.2 * (1.5 / 2.)* cos(min(sqrt(1.01 - b / l)*(PI / 0.25), PI));
+}
+
+float sdPlaneSin(vec3 p)
+{
+	return p.y + cos(p.x - iGlobalTime * 0.1) * sin(p.z - iGlobalTime * 0.1) * 0.3;
+}
+
+float fOpUnionRound(float a, float b, float r) {
+	vec2 u = max(vec2(r - a, r - b), vec2(0));
+	return max(r, min(a, b)) - length(u);
+}
+
+float fOpUnionSoft(float a, float b, float r) {
+	float e = max(r - abs(a - b), 0.);
+	return min(a, b) - e*e*0.25 / r;
+}
+
+float mbox(vec3 p)
+{
+	const int iterations = 10;
+	const float fixedRadius = 1.0;
+	const float scale = 2.3;
+	const float minRadius = 0.5;
+
+	float de = scale;
+	float fR2 = sqrt(fixedRadius * fixedRadius);
+	float mR2 = sqrt( minRadius * minRadius);
+
+	vec3 q = p;
+	for (int i = 0; i < iterations; i++)
+	{
+		if (q.x > 1.0)
+			q.x = 2.0 - q.x;
+		else
+			if (q.x < -1.0)
+				q.x = -2.0 - q.x;
+
+		if (q.y > 1.0)
+			q.y = 2.0 - q.y;
+		else
+			if (q.y < -1.0)
+				q.y = -2.0 - q.y;
+
+		if (q.z > 1.0)
+			q.z = 2.0 - q.z;
+		else
+			if (q.z < -1.0)
+				q.z = -2.0 - q.z;
+
+		float r2 = length(q);
+
+		if (r2 < mR2)
+		{
+			float div = fR2 / mR2;
+
+			q *= div;
+			de *= div;
+		}
+		else
+			if (r2 < fR2)
+			{
+				float div = fR2 / r2;
+				q *= div;
+				de *= div;
+			}
+
+		q *= scale;
+		q += p;
+		de *= scale;
+	}
+
+	// Return the distance estimation value which determines the next raytracing
+	// step size, or if whether we are within the threshold of the surface.
+	return length(q) / abs(de);
+}
+
+float mbulb(vec3 pp)
+{
+	vec3 c = pp;// new Vector3d(-1.1, 0.0, 0.0); // Julia set has fixed c, Mandelbrot c changes with location
+	float p = 8;			// power
+	float pd = p - 1.0;    // power for derivative
+
+	//					   // Convert z to polar coordinates
+	float R = length(pp);
+	float th = atan(pp.y, pp.x);
+	float ph = acos(pp.z / R);
+
+	vec3 dz;
+	float ph_dz = 0.0;
+	float th_dz = 0.0;
+	float R_dz = 1.0;
+
+	//// Iterate to compute the distance estimator.
+	float powR, powRRdz, phdz_pdph, powRsin, thdz_pdth, powR_powRsin, p_th;
+	vec3 z = pp;
+	for (int i = 0; i < 10; i++)
+	{
+		// Calculate derivative of 
+		powR = p * pow(R, pd);
+		powRRdz = powR * R_dz;
+		phdz_pdph = ph_dz + pd * ph;
+		powRsin = powRRdz * sin(phdz_pdph);
+		thdz_pdth = th_dz + pd * th;
+		dz.x = powRsin * cos(thdz_pdth) + 1.0;
+		dz.y = powRsin * sin(thdz_pdth);
+		dz.z = powRRdz * cos(phdz_pdph);
+
+		// polar coordinates of derivative dz
+		R_dz = length(dz);
+		th_dz = atan(dz.y, dz.x);
+		ph_dz = asin(dz.z / R_dz);
+
+		// z iteration
+		powR = pow(R, p);
+		powRsin = sin(p * ph);
+		powR_powRsin = powR * powRsin;
+		p_th = p * th;
+		z.x = powR_powRsin * cos(p_th);
+		z.y = powR_powRsin * sin(p_th);
+		z.z = powR * cos(p * ph);
+		z += c;
+
+		R = length(z);
+		th = atan(z.y, z.x);
+		ph = asin(z.z / R);
+
+		if (R > 4.0)
+			break;
+	}
+
+	// Return the distance estimation value which determines the next raytracing
+	// step size, or if whether we are within the threshold of the surface.
+	return  0.5 *R * log(R) / R_dz;
+}
+
 vec2 map(in vec3 pos)
 {
-	vec2 res = opU(vec2(sdPlane(pos), 1.0),
-		vec2(sdSphere(pos - vec3(0.0, 0.25, 0.0), 0.25), 46.9));
-	//ares = vec2(sdSphere(pos - vec3(0.0, 0.25, 0.0), 0.25), 46.9);
-	res = opU(res, vec2(sdBox(pos - vec3(1.0, 0.25, 0.0), vec3(0.25)), 3.0));
-	res = opU(res, vec2(udRoundBox(pos - vec3(1.0, 0.25, 1.0), vec3(0.15), 0.1), 41.0));
-	res = opU(res, vec2(sdTorus(pos - vec3(0.0, 0.25, 1.0), vec2(0.20, 0.05)), 25.0));
-	res = opU(res, vec2(sdCapsule(pos, vec3(-1.3, 0.10, -0.1), vec3(-0.8, 0.50, 0.2), 0.1), 31.9));
-	res = opU(res, vec2(sdTriPrism(pos - vec3(-1.0, 0.25, -1.0), vec2(0.25, 0.05)), 43.5));
-	res = opU(res, vec2(sdCylinder(pos - vec3(1.0, 0.30, -1.0), vec2(0.1, 0.2)), 8.0));
-	res = opU(res, vec2(sdCone(pos - vec3(0.0, 0.50, -1.0), vec3(0.8, 0.6, 0.3)), 55.0));
-	res = opU(res, vec2(sdTorus82(pos - vec3(0.0, 0.25, 2.0), vec2(0.20, 0.05)), 50.0));
-	res = opU(res, vec2(sdTorus88(pos - vec3(-1.0, 0.25, 2.0), vec2(0.20, 0.05)), 43.0));
-	res = opU(res, vec2(sdCylinder6(pos - vec3(1.0, 0.30, 2.0), vec2(0.1, 0.2)), 12.0));
-	res = opU(res, vec2(sdHexPrism(pos - vec3(-1.0, 0.20, 1.0), vec2(0.25, 0.05)), 17.0));
+	/// mandelbulb
+	//vec2 res = vec2(sdPlane(pos), 1.0);
+	//res =
+	//	opU(res, vec2(
+	//		mbulb(pos), 15.0));
 
-	//res = opU(res, vec2(kTower(pos - vec3(10.0, -1.0, 10.0)), 41.0));
-	//res = opU(res, vec2(ScherkDe(pos - vec3(10.0, -1.0, 10.0)), 41.0));
+	/// mandlebox
+	//vec2 res = vec2(mbox(pos), 15.0);
 
+	/// blob
+	//vec2 res = vec2(sdPlaneSin(pos), 1.0);
+	//res =
+	//	opU(res, vec2(
+	//		fBlob(pos - vec3(0.0, 2.0, 0.0)) + sin(iGlobalTime) * 0.4, 49.0));
+
+	///a valley of mengers
+	vec3 repp = opRep(vec3(pos.x - 5, pos.y - iGlobalTime * 0.5, pos.z - 5), vec3(23));
+	float blob = sdSphere(repp, 1.5);
+
+	vec2 res = vec2(sdPlaneSin(pos), 1.0);
+	res = opU(res, vec2(menger(vec3(pos.x, pos.y - sin(iGlobalTime) * 0.02, pos.z)), 15.0));
+
+	res.x = fOpUnionSoft(res.x, blob, 2.0);
+
+	//float blob = fBlob(repp);// +sin(iGlobalTime) * 0.4;
+
+	/// boxes
+	//vec3 repp = opRep(pos, vec3(5));
+	//float sdBoxRep = sdBox( repp, vec3(1.0, 1.0, 1.0));
+
+	//vec2 res = vec2(sdPlane(pos), 1.0);
+	//res = opU(res, vec2(sdBoxRep, 17.0));
+
+	/// tunnels
+	//res = opU(res, vec2(
+	//		opS(
+	//			sdPlaneX(
+	//				pos - vec3(-5.0, 0.0, 0.0)),
+	//			sdBoxRep ),
+	//	17.0));
+
+	//vec2 res = opU(vec2(sdPlane(pos), 1.0),
+	//	vec2(sdSphere(pos - vec3(0.0, 0.25, 0.0), 0.25), 46.9));
+	//res = opU(res, vec2(sdBox(pos - vec3(1.0, 0.25, 0.0), vec3(0.25)), 3.0));
+	//res = opU(res, vec2(udRoundBox(pos - vec3(1.0, 0.25, 1.0), vec3(0.15), 0.1), 41.0));
+	//res = opU(res, vec2(sdTorus(pos - vec3(0.0, 0.25, 1.0), vec2(0.20, 0.05)), 25.0));
+	//res = opU(res, vec2(sdCapsule(pos, vec3(-1.3, 0.10, -0.1), vec3(-0.8, 0.50, 0.2), 0.1), 31.9));
+	//res = opU(res, vec2(sdTriPrism(pos - vec3(-1.0, 0.25, -1.0), vec2(0.25, 0.05)), 43.5));
+	//res = opU(res, vec2(sdCylinder(pos - vec3(1.0, 0.30, -1.0), vec2(0.1, 0.2)), 8.0));
+	//res = opU(res, vec2(sdCone(pos - vec3(0.0, 0.50, -1.0), vec3(0.8, 0.6, 0.3)), 55.0));
+	//res = opU(res, vec2(sdTorus82(pos - vec3(0.0, 0.25, 2.0), vec2(0.20, 0.05)), 50.0));
+	//res = opU(res, vec2(sdTorus88(pos - vec3(-1.0, 0.25, 2.0), vec2(0.20, 0.05)), 43.0));
+	//res = opU(res, vec2(sdCylinder6(pos - vec3(1.0, 0.30, 2.0), vec2(0.1, 0.2)), 12.0));
+	//res = opU(res, vec2(sdHexPrism(pos - vec3(-1.0, 0.20, 1.0), vec2(0.25, 0.05)), 17.0));
+
+	////res = opU(res, vec2(kTower(pos - vec3(10.0, -1.0, 10.0)), 41.0));
+	//
 	//res = opU(res, vec2(opS(
 	//	udRoundBox(pos - vec3(-2.0, 0.2, 1.0), vec3(0.15), 0.05),
 	//	sdSphere(pos - vec3(-2.0, 0.2, 1.0), 0.25)), 13.0));
@@ -234,52 +456,42 @@ vec2 map(in vec3 pos)
 	//res = opU(res, vec2(sdConeSection(pos - vec3(0.0, 0.35, -2.0), 0.15, 0.2, 0.1), 13.67));
 
 	//res = opU(res, vec2(sdEllipsoid(pos - vec3(1.0, 0.35, -2.0), vec3(0.15, 0.2, 0.05)), 43.17));
-
+	
 	return res;
 }
 
-//vec2 castRay(in vec3 ro, in vec3 rd)
-//{
-//	float tmin = 1.0;
-//	float tmax = 20.0;
-//
-//#if 0
-//	float tp1 = (0.0 - ro.y) / rd.y; if (tp1>0.0) tmax = min(tmax, tp1);
-//	float tp2 = (1.6 - ro.y) / rd.y; if (tp2>0.0) {
-//		if (ro.y>1.6) tmin = max(tmin, tp2);
-//		else           tmax = min(tmax, tp2);
-//	}
-//#endif
-//
-//	float precis = 0.002;
-//	float t = tmin;
-//	float m = -1.0;
-//	for (int i = 0; i<50; i++)
-//	{
-//		vec2 res = map(ro + rd*t);
-//		if (res.x<precis || t>tmax) break;
-//		t += res.x;
-//		m = res.y;
-//	}
-//
-//	if (t>tmax) m = -1.0;
-//	return vec2(t, m);
-//}
+vec2 castRay1111111111(in vec3 ro, in vec3 rd)
+{
+	float tmin = 0.0002;
+	float tmax = 100.0;
+
+	float precis = 0.0002;
+	float t = tmin;
+	float m = -1.0;
+	for (int i = 0; i < 50; i++)
+	{
+		vec2 res = map(ro + rd * t);
+		if (res.x < precis || t > tmax) break;
+		t += res.x;
+		m = res.y;
+	}
+
+	if (t>tmax) m = -1.0;
+	return vec2(t, m);
+}
 
 
 vec2 castRay(in vec3 ro, in vec3 rd)
 {
-	const float MAX_DIST = 50;
-	const float MIN_DIST = 0.002;
-	const float NONE = -1.0;
+	const float MAX_DIST = 100;
+	const float MIN_DIST = 0.0002;
 
 	float t = 0.0;
-	vec2 res = vec2(-1.0);
 	vec2 h = vec2(1.0);
 	float overstep = 0.0;
 	float phx = MAX_DIST;
 
-	for (int i = 0; i < 50; i++)
+	for (int i = 0; i < 100; i++)
 	{
 		if (h.x < MIN_DIST || t > MAX_DIST)
 			break;
@@ -289,7 +501,7 @@ vec2 castRay(in vec3 ro, in vec3 rd)
 		if (h.x > overstep)
 		{
 			overstep = h.x * min(1.0, 0.5 * h.x / phx);
-			t += h.x * 0.3 + overstep;
+			t += h.x * 0.5 + overstep;
 			phx = h.x;
 		}
 		else
@@ -299,14 +511,12 @@ vec2 castRay(in vec3 ro, in vec3 rd)
 			h.x = 1.0;
 			overstep = 0.0;
 		}
-
-		res = vec2(t, h.y);
 	}
 
 	if (t > MAX_DIST)
-		res = vec2(NONE);
+		h.y = -1.0;
 
-	return res;
+	return vec2(t, h.y);
 }
 
 
@@ -314,7 +524,7 @@ float softshadow(in vec3 ro, in vec3 rd, in float mint, in float tmax)
 {
 	float res = 1.0;
 	float t = mint;
-	for (int i = 0; i<16; i++)
+	for (int i = 0; i < 16; i++)
 	{
 		float h = map(ro + rd*t).x;
 		res = min(res, 8.0*h / t);
@@ -350,9 +560,6 @@ float calcAO(in vec3 pos, in vec3 nor)
 	return clamp(1.0 - 3.0*occ, 0.0, 1.0);
 }
 
-
-
-
 vec3 render(in vec3 ro, in vec3 rd)
 {
 	vec3 col = vec3(0.7, 0.9, 1.0) + rd.y*0.8;
@@ -361,7 +568,7 @@ vec3 render(in vec3 ro, in vec3 rd)
 	float m = res.y;
 	if (m > -0.5)
 	{
-		vec3 pos = ro + t*rd;
+		vec3 pos = ro + t * rd;
 		vec3 nor = calcNormal(pos);
 		vec3 ref = reflect(rd, nor);
 
@@ -376,7 +583,8 @@ vec3 render(in vec3 ro, in vec3 rd)
 
 		// lighitng        
 		float occ = calcAO(pos, nor);
-		vec3  lig = normalize(vec3(-0.6, 0.7, -0.5));
+		//vec3  lig = normalize(vec3(-0.6, 0.7, -0.5));
+		vec3  lig = normalize(vec3(cos(iGlobalTime *0.1), abs(sin(iGlobalTime *0.1)), cos(iGlobalTime *0.1) * sin(iGlobalTime *0.1)));
 		float amb = clamp(0.5 + 0.5*nor.y, 0.0, 1.0);
 		float dif = clamp(dot(nor, lig), 0.0, 1.0);
 		float bac = clamp(dot(nor, normalize(vec3(-lig.x, 0.0, -lig.z))), 0.0, 1.0)*clamp(1.0 - pos.y, 0.0, 1.0);
@@ -384,8 +592,8 @@ vec3 render(in vec3 ro, in vec3 rd)
 		float fre = pow(clamp(1.0 + dot(nor, rd), 0.0, 1.0), 2.0);
 		float spe = pow(clamp(dot(ref, lig), 0.0, 1.0), 16.0);
 
-		dif *= softshadow(pos, lig, 0.02, 2.5);
-		dom *= softshadow(pos, ref, 0.02, 2.5);
+		dif *= softshadow(pos, lig, 0.02, 25);
+		dom *= softshadow(pos, ref, 0.02, 25);
 
 		vec3 lin = vec3(0.0);
 		lin += 1.20*dif*vec3(1.00, 0.85, 0.55);
@@ -414,13 +622,7 @@ mat3 setCamera(in vec3 ro, in vec3 ta, float cr)
 
 void main(void)
 {
-	vec2 q = fragCoord.xy / iResolution.xy;
-	vec2 p = -1.0 + 2.0*q;
-	p.x *= iResolution.x / iResolution.y;
-
 	// camera	
-	//vec3 ro = 0.5 * vec3(-0.5 + 3.5*cos(0.1*time + 6.0*mo.x), 1.0 + 2.0*mo.y, 0.5 + 3.5*sin(0.1*time + 6.0*mo.x));
-	//vec3 ta = vec3(-0.5, 0.4, 0.5);
 	vec3 ro = CamRo;
 	vec3 ta = CamTa;
 
@@ -428,6 +630,10 @@ void main(void)
 	mat3 ca = setCamera(ro, ta, 0.0);
 
 	// ray direction
+	vec2 q = fragCoord.xy / iResolution.xy;
+	vec2 p = -1.0 + 2.0 * q;
+	p.x *= iResolution.x / iResolution.y;
+
 	vec3 rd = ca * normalize(vec3(p.xy, 2.0));
 
 	// render	

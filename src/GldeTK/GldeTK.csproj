@@ -61,7 +61,7 @@
     <EmbeddedResource Include="shaders\vertex.c" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="shaders\fragmentTest.c" />
+    <EmbeddedResource Include="shaders\fragment_menger_valley.c" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

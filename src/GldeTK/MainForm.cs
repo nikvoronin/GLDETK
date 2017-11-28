@@ -5,7 +5,6 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Diagnostics;
-using System.Drawing;
 
 namespace GldeTK
 {
@@ -35,9 +34,9 @@ namespace GldeTK
         public MainForm()
         {
             Title = APP_NAME;
-            VSync = VSyncMode.On;
-            Width = 800;
-            Height = 600;
+            VSync = VSyncMode.Adaptive;
+            Width = 1024;
+            Height = 768;
         }
 
         float lastX, lastY;
