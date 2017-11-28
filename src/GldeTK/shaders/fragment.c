@@ -145,12 +145,14 @@ vec3 render(in vec3 ro, in vec3 rd)
 	return vec3(clamp(col, 0.0, 1.0));
 }
 
-mat3 setCamera(in vec3 ro, in vec3 ta, float cr)
+mat3 setCamera(in vec3 ro, in vec3 ta)
 {
+	const vec3 up = vec3(0.0, 1.0, 0.0);
+
 	vec3 cw = normalize(ta - ro);
-	vec3 cp = vec3(sin(cr), cos(cr), 0.0);
-	vec3 cu = normalize(cross(cw, cp));
+	vec3 cu = normalize(cross(cw, up));
 	vec3 cv = normalize(cross(cu, cw));
+
 	return mat3(cu, cv, cw);
 }
 
@@ -161,7 +163,7 @@ void main(void)
 	vec3 ta = CamTa;
 
 	// camera-to-world transformation
-	mat3 ca = setCamera(ro, ta, 0.0);
+	mat3 ca = setCamera(ro, ta);
 
 	// ray direction
 	vec2 q = fragCoord.xy / iResolution.xy;
@@ -173,7 +175,8 @@ void main(void)
 	// render	
 	vec3 col = render(ro, rd);
 
-	//col = pow(col, vec3(0.4545));  // tint
+	// tint
+	col = pow(col, vec3(0.8545));
 
 	gl_FragColor = vec4(col, 1.0);
 }
