@@ -132,7 +132,6 @@ namespace GldeTK
             if (state.IsKeyDown(Key.D))
                 moveDir += Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
 
-
             if (state.IsKeyDown(Key.ShiftLeft))
                 moveDir -= camUp * PLAYER_MOVE_SPEED;
 
@@ -145,7 +144,7 @@ namespace GldeTK
 
             float d = Phys.CastRay(camRo, moveDir.Normalized(), PLAYER_RADIUS);
 
-            if (d >= PLAYER_RADIUS)
+            if (d >= PLAYER_RADIUS * 1.1f)
                 camRo += moveDir;
             else
             {   // collide here
@@ -156,9 +155,8 @@ namespace GldeTK
                 Vector3 norm = Phys.CalcNormal(hitPoint);
                 Vector3 invNorm = -norm;
                 invNorm *= (moveDir * norm).LengthFast;
-                Vector3 wallDir = moveDir - invNorm;
 
-                camRo += wallDir;
+                camRo += moveDir - invNorm; // + wall sliding direction
             }
         }
 
