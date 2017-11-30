@@ -1,2 +1,3 @@
-1. Drawing text
-2. Map in texture with primitives
+- Drawing text
+- Map in texture with primitives
+- Translate iGlobalTimer to the Phys engine
