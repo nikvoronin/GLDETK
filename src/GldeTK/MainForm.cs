@@ -114,28 +114,41 @@ namespace GldeTK
             return state.IsKeyUp(key) && lastState.IsKeyDown(key);
         }
 
+        const float PLAYER_RADIUS = 1.0f;
+        private void UpdatePlayerMove(KeyboardState state)
+        {
+            Vector3 moveDir = Vector3.Zero;
+
+            if (state.IsKeyDown(Key.W))
+                moveDir += camFront * PLAYER_MOVE_SPEED;
+
+            if (state.IsKeyDown(Key.S))
+                moveDir -= camFront * PLAYER_MOVE_SPEED;
+
+            if (state.IsKeyDown(Key.A))
+                moveDir -= Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
+
+            if (state.IsKeyDown(Key.D))
+                moveDir += Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
+
+            if (state.IsKeyDown(Key.ShiftLeft))
+                moveDir -= camUp * PLAYER_MOVE_SPEED;
+
+            if (state.IsKeyDown(Key.Space))
+                moveDir += camUp * PLAYER_MOVE_SPEED;
+
+            Vector2 res = Phys.CastRay(camRo, moveDir.Normalized());
+
+            if (res.X > PLAYER_RADIUS)
+                camRo += moveDir;
+        }
+
         KeyboardState lastState = new KeyboardState();
         private void UpdateKeyInput()
         {
             KeyboardState state = Keyboard.GetState();
 
-            if(state.IsKeyDown(Key.W))
-                camRo += camFront * PLAYER_MOVE_SPEED;
-
-            if (state.IsKeyDown(Key.S))
-                camRo -= camFront * PLAYER_MOVE_SPEED;
-
-            if (state.IsKeyDown(Key.A))            
-                camRo -= Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
-
-            if (state.IsKeyDown(Key.D))
-                camRo += Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
-
-            if (state.IsKeyDown(Key.ShiftLeft))
-                camRo -= camUp * PLAYER_MOVE_SPEED;
-
-            if (state.IsKeyDown(Key.Space))
-                camRo += camUp * PLAYER_MOVE_SPEED;
+            UpdatePlayerMove(state);
 
             if (state.IsKeyDown(Key.Escape))
                 Exit();

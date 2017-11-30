@@ -48,7 +48,7 @@ namespace GldeTK
             return res;
         }
 
-        static Vector2 CastRay(Vector3 ro, Vector3 rd)
+        public static Vector2 CastRay(Vector3 ro, Vector3 rd)
         {
             //TODO move to external constants w/ uniq names
             const float MAX_DIST = 100f;
