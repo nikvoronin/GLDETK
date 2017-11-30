@@ -51,15 +51,15 @@ namespace GldeTK
         public static Vector2 CastRay(Vector3 ro, Vector3 rd)
         {
             //TODO move to external constants w/ uniq names
-            const float MAX_DIST = 100f;
-            const float MIN_DIST = 0.0002f;
+            const float MAX_DIST = 10f;
+            const float MIN_DIST = 0.01f;
 
             float t = 0.0f;
             Vector2 h = new Vector2(1.0f);
             float overstep = 0.0f;
             float phx = MAX_DIST;
 
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 10; i++)
             {
                 if (h.X < MIN_DIST || t > MAX_DIST)
                     break;

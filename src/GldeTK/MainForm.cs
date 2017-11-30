@@ -102,6 +102,7 @@ namespace GldeTK
             GL.Viewport(0, 0, Width, Height);
         }
 
+        float playerAcc = 0.0f;
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             UpdateKeyInput();
@@ -131,16 +132,23 @@ namespace GldeTK
             if (state.IsKeyDown(Key.D))
                 moveDir += Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
 
+
             if (state.IsKeyDown(Key.ShiftLeft))
                 moveDir -= camUp * PLAYER_MOVE_SPEED;
 
             if (state.IsKeyDown(Key.Space))
                 moveDir += camUp * PLAYER_MOVE_SPEED;
+            else
+                playerAcc += PLAYER_MOVE_SPEED / 100;   // TODO should make gravity constant more phisical
+
+            moveDir.Y -= playerAcc;  // gravity
 
             Vector2 res = Phys.CastRay(camRo, moveDir.Normalized());
 
             if (res.X > PLAYER_RADIUS)
                 camRo += moveDir;
+            else
+                playerAcc = 0.0f;
         }
 
         KeyboardState lastState = new KeyboardState();
