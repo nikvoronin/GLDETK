@@ -52,7 +52,7 @@ namespace GldeTK
         static Vector3 eps_xyy = new Vector3(EPS, 0.0f, 0.0f);
         static Vector3 eps_yxy = new Vector3(0.0f, EPS, 0.0f);
         static Vector3 eps_yyx = new Vector3(0.0f, 0.0f, EPS);
-        static Vector3 CalcNormal(Vector3 pos)
+        public static Vector3 CalcNormal(Vector3 pos)
         {
             Vector3 nor = new Vector3(
                 Map(pos + eps_xyy).X - Map(pos - eps_xyy).X,

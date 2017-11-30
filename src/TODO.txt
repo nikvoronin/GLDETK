@@ -1,0 +1,2 @@
+1. Drawing text
+2. Map in texture with primitives

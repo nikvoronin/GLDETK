@@ -145,10 +145,21 @@ namespace GldeTK
 
             Vector2 res = Phys.CastRay(camRo, moveDir.Normalized(), PLAYER_RADIUS);
 
-            if (res.X > PLAYER_RADIUS)
+            if (res.X >= PLAYER_RADIUS)
                 camRo += moveDir;
             else
+            {   // collide here
                 playerAcc = 0.0f;
+
+                // smooth wall sliding
+                Vector3 hitPoint = camRo + moveDir * PLAYER_RADIUS;// res.X;
+                Vector3 norm = Phys.CalcNormal(hitPoint);
+                Vector3 invNorm = -norm;
+                invNorm *= (moveDir * norm).LengthFast;
+                Vector3 wallDir = moveDir - invNorm;
+
+                camRo += wallDir;
+            }
         }
 
         KeyboardState lastState = new KeyboardState();
