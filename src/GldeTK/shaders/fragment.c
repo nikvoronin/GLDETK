@@ -52,13 +52,14 @@ vec2 castRay(in vec3 ro, in vec3 rd)
 	//TODO move to external constants w/ uniq names
 	const float MAX_DIST = 100;
 	const float MIN_DIST = 0.0002;
+	const int MAX_RAY_STEPS = 100;
 
 	float t = 0.0;
 	vec2 h = vec2(1.0);
 	float overstep = 0.0;
 	float phx = MAX_DIST;
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < MAX_RAY_STEPS; i++)
 	{
 		if (h.x < MIN_DIST || t > MAX_DIST)
 			break;

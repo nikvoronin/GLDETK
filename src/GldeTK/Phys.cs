@@ -26,8 +26,8 @@ namespace GldeTK
         static Vector3 OpRep(Vector3 p, Vector3 c)
         {
             return
-                new Vector3(p.X % c.X, p.Y % c.Y, p.Z % c.Z ) - 0.5f * c;
-                //mod(p, c) - 0.5 * c;
+                new Vector3(Math.Abs(p.X % c.X), Math.Abs(p.Y % c.Y), Math.Abs(p.Z % c.Z)) - 0.5f * c;
+            //mod(p, c) - 0.5 * c;
         }
 
         //----------------------------------------------------------------------
@@ -71,13 +71,14 @@ namespace GldeTK
         public static float CastRay(Vector3 ro, Vector3 rd, float playerR)
         {
             //TODO move to external constants w/ uniq names
-            const float MIN_DIST = 0.001f;
-            float MAX_DIST = playerR * 2.0f;
+            const int MAX_RAY_STEPS = 10;
+            const float MIN_DIST = 0.01f;
+            float MAX_DIST = 100;
 
             float t = 0.0f;
             float h = 1.0f;
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < MAX_RAY_STEPS; i++)
             {
 
                 h = Map(ro + rd * t);

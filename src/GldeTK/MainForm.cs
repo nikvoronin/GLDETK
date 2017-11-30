@@ -118,45 +118,48 @@ namespace GldeTK
         const float PLAYER_RADIUS = 1.0f;
         private void UpdatePlayerMove(KeyboardState state)
         {
-            Vector3 moveDir = Vector3.Zero;
+            Vector3 moveStep = Vector3.Zero;
 
             if (state.IsKeyDown(Key.W))
-                moveDir += camFront * PLAYER_MOVE_SPEED;
+                moveStep += camFront * PLAYER_MOVE_SPEED;
 
             if (state.IsKeyDown(Key.S))
-                moveDir -= camFront * PLAYER_MOVE_SPEED;
+                moveStep -= camFront * PLAYER_MOVE_SPEED;
 
             if (state.IsKeyDown(Key.A))
-                moveDir -= Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
+                moveStep -= Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
 
             if (state.IsKeyDown(Key.D))
-                moveDir += Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
+                moveStep += Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
 
             if (state.IsKeyDown(Key.ShiftLeft))
-                moveDir -= camUp * PLAYER_MOVE_SPEED;
+                moveStep -= camUp * PLAYER_MOVE_SPEED;
 
             if (state.IsKeyDown(Key.Space))
-                moveDir += camUp * PLAYER_MOVE_SPEED;
+            {
+                playerAcc = 0.0f;
+                moveStep += camUp * PLAYER_MOVE_SPEED;
+            }
             else
                 playerAcc += PLAYER_MOVE_SPEED / 100;   // TODO should make gravity constant more phisical
 
-            moveDir.Y -= playerAcc;  // gravity
+            moveStep.Y -= playerAcc;  // gravity
 
-            float d = Phys.CastRay(camRo, moveDir.Normalized(), PLAYER_RADIUS);
+            float d = Phys.CastRay(camRo, moveStep.Normalized(), PLAYER_RADIUS);
 
-            if (d >= PLAYER_RADIUS * 1.1f)
-                camRo += moveDir;
+            if (d > PLAYER_RADIUS)
+                camRo += moveStep;
             else
             {   // collide here
                 playerAcc = 0.0f;
 
                 // smooth wall sliding
-                Vector3 hitPoint = camRo + moveDir * PLAYER_RADIUS;
+                Vector3 hitPoint = camRo + moveStep * PLAYER_RADIUS;
                 Vector3 norm = Phys.CalcNormal(hitPoint);
                 Vector3 invNorm = -norm;
-                invNorm *= (moveDir * norm).LengthFast;
+                invNorm *= (moveStep * norm).LengthFast;
 
-                camRo += moveDir - invNorm; // + wall sliding direction
+                camRo += moveStep - invNorm; // + wall sliding direction
             }
         }
 
