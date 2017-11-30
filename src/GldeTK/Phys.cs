@@ -48,6 +48,21 @@ namespace GldeTK
             return res;
         }
 
+        const float EPS = 0.001f;
+        static Vector3 eps_xyy = new Vector3(EPS, 0.0f, 0.0f);
+        static Vector3 eps_yxy = new Vector3(0.0f, EPS, 0.0f);
+        static Vector3 eps_yyx = new Vector3(0.0f, 0.0f, EPS);
+        static Vector3 CalcNormal(Vector3 pos)
+        {
+            Vector3 nor = new Vector3(
+                Map(pos + eps_xyy).X - Map(pos - eps_xyy).X,
+                Map(pos + eps_yxy).X - Map(pos - eps_yxy).X,
+                Map(pos + eps_yyx).X - Map(pos - eps_yyx).X);
+
+            return nor.Normalized();
+        }
+
+
         // TODO can optimize we should not need of vector2 just a distance to object or negative value
         public static Vector2 CastRay(Vector3 ro, Vector3 rd, float playerR)
         {
