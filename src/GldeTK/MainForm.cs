@@ -143,7 +143,7 @@ namespace GldeTK
 
             moveDir.Y -= playerAcc;  // gravity
 
-            Vector2 res = Phys.CastRay(camRo, moveDir.Normalized());
+            Vector2 res = Phys.CastRay(camRo, moveDir.Normalized(), PLAYER_RADIUS);
 
             if (res.X > PLAYER_RADIUS)
                 camRo += moveDir;

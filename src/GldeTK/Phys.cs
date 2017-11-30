@@ -48,45 +48,33 @@ namespace GldeTK
             return res;
         }
 
-        public static Vector2 CastRay(Vector3 ro, Vector3 rd)
+        // TODO can optimize we should not need of vector2 just a distance to object or negative value
+        public static Vector2 CastRay(Vector3 ro, Vector3 rd, float playerR)
         {
             //TODO move to external constants w/ uniq names
-            const float MAX_DIST = 10f;
             const float MIN_DIST = 0.01f;
+            float MAX_DIST = playerR * 2.0f;
 
             float t = 0.0f;
             Vector2 h = new Vector2(1.0f);
-            float overstep = 0.0f;
-            float phx = MAX_DIST;
 
             for (int i = 0; i < 10; i++)
             {
-                if (h.X < MIN_DIST || t > MAX_DIST)
-                    break;
 
                 h = Map(ro + rd * t);
 
-                if (h.X > overstep)
-                {
-                    overstep = h.X * Math.Min(1.0f, 0.5f * h.X / phx);
-                    t += h.X * 0.5f + overstep;
-                    phx = h.X;
-                }
-                else
-                {
-                    t -= overstep;
-                    phx = MAX_DIST;
-                    h.X = 1.0f;
-                    overstep = 0.0f;
-                }
+                if (h.X < MIN_DIST || t > MAX_DIST)
+                    break;
+
+                t += h.X;
             }
+
+            h.X = t;
 
             if (t > MAX_DIST)
                 h.Y = -1.0f;
 
-            return new Vector2(t, h.Y);
+            return h;
         }
-
-
     } // class
 }
