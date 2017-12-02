@@ -1,3 +1,4 @@
 - Drawing text
 - Map in texture with primitives
 - Translate iGlobalTimer to the Phys engine
+- Phys rays projects as dot but player is a sphere. Should project as sphere or bunch of rays better

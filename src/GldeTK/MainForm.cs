@@ -14,6 +14,7 @@ namespace GldeTK
         const string FRAGMENT_FILENAME = "GldeTK.shaders.fragment.c";
         const string VERTEX_FILENAME = "GldeTK.shaders.vertex.c";
         const string GEOMETRY_FILENAME = "GldeTK.shaders.geometry.c";
+        const string RELEASE_DATE = "2 Dec 2017";
 
 
         Vector3 camRo = new Vector3(0.0f, 1.0f, 0);
@@ -141,7 +142,7 @@ namespace GldeTK
                 moveStep += camUp * PLAYER_MOVE_SPEED;
             }
             else
-                playerAcc += PLAYER_MOVE_SPEED / 100;   // TODO should make gravity constant more phisical
+                playerAcc += PLAYER_MOVE_SPEED / 50;   // TODO should make gravity constant more phisical
 
             moveStep.Y -= playerAcc;  // gravity
 
@@ -238,7 +239,7 @@ namespace GldeTK
 
             if (iGlobalTime - s1_timer > 1)
             {
-                Title = $"{APP_NAME} — {(delta * 0.0001).ToString("0.")}ms, {(10000000 / delta).ToString("0")}fps";
+                Title = $"{APP_NAME} / {RELEASE_DATE} — {(delta * 0.0001).ToString("0.")}ms, {(10000000 / delta).ToString("0")}fps";
                 s1_timer = iGlobalTime;
             }
 

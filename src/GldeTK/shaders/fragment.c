@@ -17,6 +17,12 @@ float sdSphere(vec3 p, float s)
 	return length(p) - s;
 }
 
+float sdBox(vec3 p, vec3 b)
+{
+	vec3 d = abs(p) - b;
+	return min(max(d.x, max(d.y, d.z)), 0.0) + length(max(d, 0.0));
+}
+
 //----------------------------------------------------------------------
 
 float opA(float d1, float d2)
@@ -35,13 +41,20 @@ vec2 map(in vec3 pos)
 {
 	vec2 res = vec2(sdPlaneY(pos), 1.0);
 
-	vec3 prep = opRep(pos, vec3(7.0));
+	vec3 prep = opRep(pos, vec3(10.0));
 
 	res.x =
 		opA(
 			res.x,
 			sdSphere(prep, 1.0));
 	
+	prep = opRep(pos, vec3(7.0));
+
+	res.x =
+		opA(
+			res.x,
+			sdBox(prep, vec3(1.0)));
+
 	res.y = 45.0;
 
 	return res;

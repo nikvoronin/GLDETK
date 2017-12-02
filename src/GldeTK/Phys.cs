@@ -5,6 +5,32 @@ namespace GldeTK
 {
     public static class Phys
     {
+        // Utils ----------------------------------------------------------------------
+        static Vector3 AbsV3(Vector3 v)
+        {
+            return
+                new Vector3(Math.Abs(v.X), Math.Abs(v.Y), Math.Abs(v.Z));
+        }
+
+        static Vector3 MaxV3(Vector3 v1, Vector3 v2)
+        {
+            return
+                new Vector3(
+                    Math.Max(v1.X, v2.X),
+                    Math.Max(v1.Y, v2.Y),
+                    Math.Max(v1.Z, v2.Z) );
+        }
+
+        static Vector3 MaxV3(Vector3 v1, float s)
+        {
+            return
+                new Vector3(
+                    Math.Max(v1.X, s),
+                    Math.Max(v1.Y, s),
+                    Math.Max(v1.Z, s));
+        }
+
+        // Signed Distance Functions ----------------------------------------------------------------------
 
         static float SdPlaneY(Vector3 p)
         {
@@ -16,7 +42,16 @@ namespace GldeTK
             return p.LengthFast - s;
         }
 
-        //----------------------------------------------------------------------
+        static float SdBox(Vector3 p, Vector3 b)
+        {
+            Vector3 d = AbsV3(p) - b;
+            return
+                Math.Min( Math.Max( d.X, Math.Max(d.Y, d.Z)), 0.0f) +
+                MaxV3(d, 0.0f).LengthFast;
+        }
+
+
+        // Domain operations ----------------------------------------------------------------------
 
         static float OpA(float d1, float d2)
         {
@@ -30,17 +65,23 @@ namespace GldeTK
             //mod(p, c) - 0.5 * c;
         }
 
-        //----------------------------------------------------------------------
+        // Map projection and raycaster systems ----------------------------------------------------------------------
 
         static float Map(Vector3 pos)
         {
             float d = SdPlaneY(pos);
 
-            Vector3 posRepeat = OpRep(pos, new Vector3(7.0f));
+            Vector3 posRepeat = OpRep(pos, new Vector3(10.0f));
 
             d = OpA(
                     d,
                     SdSphere(posRepeat, 1.0f));
+
+            posRepeat = OpRep(pos, new Vector3(7.0f));
+
+            d = OpA(
+                    d,
+                    SdBox(posRepeat, new Vector3(1.0f)));
 
             return d;
         }
