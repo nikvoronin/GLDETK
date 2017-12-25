@@ -5,6 +5,11 @@ uniform vec3 iResolution;
 uniform vec3 CamRo;
 uniform vec3 CamTa;
 
+layout (std140) uniform GlobalMap
+{
+	float sdElements[10];
+};
+
 varying vec2 fragCoord;
 
 float sdPlaneY(vec3 p)
@@ -46,14 +51,14 @@ vec2 map(in vec3 pos)
 	res.x =
 		opA(
 			res.x,
-			sdSphere(prep, 1.0));
+			sdSphere(prep, sdElements[0]));
 	
 	prep = opRep(pos, vec3(7.0));
 
-	res.x =
-		opA(
-			res.x,
-			sdBox(prep, vec3(1.0)));
+	//res.x =
+	//	opA(
+	//		res.x,
+	//		sdBox(prep, vec3(1.0)));
 
 	res.y = 45.0;
 

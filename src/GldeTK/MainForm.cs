@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace GldeTK
 {
@@ -15,7 +16,8 @@ namespace GldeTK
         const string VERTEX_FILENAME = "GldeTK.shaders.vertex.c";
         const string GEOMETRY_FILENAME = "GldeTK.shaders.geometry.c";
         const string RELEASE_DATE = "2 Dec 2017";
-
+        const string UF_MAPELEMENTS_BLOCKNAME = "GlobalMap";
+        const int UF_MAPELEMENTS_BLOCK_LENGTH = 10;
 
         Vector3 camRo = new Vector3(0.0f, 1.0f, 0);
         Vector3 camTa = new Vector3(0, 0.0f, 0);
@@ -65,6 +67,16 @@ namespace GldeTK
             return GL.GetUniformLocation(h_shaderProgram, uniformName);
         }
 
+        [StructLayout(LayoutKind.Explicit)]
+        struct GlobalMapStruct
+        {
+            [FieldOffset(0)]
+            public float[] GlobalMap;
+
+            public static readonly int Size =
+                    BlittableValueType<GlobalMapStruct>.Stride;
+        }
+
         private void CreateShaders()
         {
             h_vertex = GL.CreateShader(ShaderType.VertexShader);
@@ -82,6 +94,7 @@ namespace GldeTK
             GL.AttachShader(h_shaderProgram, h_fragment);
 
             GL.LinkProgram(h_shaderProgram);
+            CreateMapUbo();
             GL.UseProgram(h_shaderProgram);
 
             GL.DeleteShader(h_vertex);      h_vertex = -1;
@@ -91,7 +104,64 @@ namespace GldeTK
             uf_iResolution = GetUniformLocation("iResolution");
             uf_CamRo = GetUniformLocation("CamRo");
             uf_CamTa = GetUniformLocation("CamTa");
-            //uf_iMouse = GetUniformLocation("iMouse");
+        }
+
+        private void CreateMapUbo()
+        {
+            int binding_point = 0;
+            int block_index = GL.GetUniformBlockIndex(h_shaderProgram, UF_MAPELEMENTS_BLOCKNAME);
+            GL.UniformBlockBinding(h_shaderProgram, block_index, binding_point);
+
+#region aaaaaaaaaaa
+            // Allocate space for the buffer
+            int mapBlockSize;
+            GL.GetActiveUniformBlock(
+                h_shaderProgram,
+                block_index,
+                ActiveUniformBlockParameter.UniformBlockDataSize,
+                out mapBlockSize);
+
+            // Query for the offsets of each block variable
+            var names =
+                new[] {
+                    "GlobalMap.sdElements"
+                };
+
+            var indices = new int[names.Length];
+            GL.GetUniformIndices(
+                h_shaderProgram,
+                names.Length,
+                names,
+                indices);
+
+            var offset = new int[names.Length];
+            GL.GetActiveUniforms(
+                h_shaderProgram,
+                names.Length,
+                indices,
+                ActiveUniformParameter.UniformOffset,
+                offset);
+            #endregion
+
+            // Create the buffer object and copy the data
+            int buffer;
+            GL.GenBuffers(1, out buffer);
+            GL.BindBuffer(BufferTarget.UniformBuffer, buffer);
+
+            GlobalMapStruct mapBlock = new GlobalMapStruct { GlobalMap = new float[UF_MAPELEMENTS_BLOCK_LENGTH] };
+            for (int i = 0; i < mapBlock.GlobalMap.Length; i++)
+                mapBlock.GlobalMap[i] = 1.0f;
+            mapBlock.GlobalMap[0] = 10.0f;
+            mapBlock.GlobalMap[1] = 20.0f;
+            mapBlock.GlobalMap[2] = 30.0f;
+
+            GL.BufferData(
+                BufferTarget.UniformBuffer,
+                mapBlock.GlobalMap.Length * sizeof(float),
+                ref mapBlock,
+                BufferUsageHint.DynamicDraw);
+
+            GL.BindBufferBase(BufferRangeTarget.UniformBuffer, binding_point, buffer);
         }
 
         const float PLAYER_MOVE_SPEED = .2f;
@@ -239,7 +309,7 @@ namespace GldeTK
 
             if (iGlobalTime - s1_timer > 1)
             {
-                Title = $"{APP_NAME} / {RELEASE_DATE} — {(delta * 0.0001).ToString("0.")}ms, {(10000000 / delta).ToString("0")}fps";
+                Title = $"{APP_NAME} // {RELEASE_DATE} — {(delta * 0.0001).ToString("0.")}ms, {(10000000 / delta).ToString("0")}fps // {camRo.X.ToString("0.0")} : {camRo.Y.ToString("0.0")} : {camRo.Z.ToString("0.0")} ";
                 s1_timer = iGlobalTime;
             }
 
