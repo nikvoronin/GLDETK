@@ -21,6 +21,7 @@ namespace GldeTK
 
         Vector3 camRo = new Vector3(0.0f, 1.0f, 0);
         Vector3 camTa = new Vector3(0, 0.0f, 0);
+        Matrix3 camProj = new Matrix3();
 
         int FULLSCREEN_W = 1920,
             FULLSCREEN_H = 1080;
@@ -32,7 +33,8 @@ namespace GldeTK
         int uf_iGlobalTime,
             uf_iResolution,
             uf_CamRo,
-            uf_CamTa,
+            um3_CamProj,
+            //uf_CamTa,
             ubo_GlobalMap;
 
         public MainForm()
@@ -59,6 +61,8 @@ namespace GldeTK
             stopwatch.Start();
 
             CreateShaders();
+
+            camProj = SetCamera(camRo, camTa);
 
             GL.Disable(EnableCap.DepthTest);
         }
@@ -107,7 +111,28 @@ namespace GldeTK
             uf_iGlobalTime = GetUniformLocation("iGlobalTime");
             uf_iResolution = GetUniformLocation("iResolution");
             uf_CamRo = GetUniformLocation("CamRo");
-            uf_CamTa = GetUniformLocation("CamTa");
+            um3_CamProj = GetUniformLocation("CamProj");
+            //uf_CamTa = GetUniformLocation("CamTa");
+        }
+
+        Matrix3 SetCamera(Vector3 ro, Vector3 ta, Vector3 up)
+        {
+            Vector3 cw = Vector3.Normalize(ta - ro);
+            Vector3 cu = Vector3.Normalize(Vector3.Cross(cw, up));
+            Vector3 cv = Vector3.Normalize(Vector3.Cross(cu, cw));
+
+            return
+                new Matrix3(cu, cv, cw);
+        }
+
+        Matrix3 SetCamera(Vector3 ro, Vector3 ta)
+        {
+            return
+                SetCamera(
+                    ro,
+                    ta,
+                    new Vector3(0.0f, 1.0f, 0.0f)
+                    );
         }
 
         private void CreateMapUbo()
@@ -117,12 +142,11 @@ namespace GldeTK
             GL.UniformBlockBinding(h_shaderProgram, block_index, binding_point);
 
             // Allocate space for the buffer
-            int mapBlockSize;
             GL.GetActiveUniformBlock(
                 h_shaderProgram,
                 block_index,
                 ActiveUniformBlockParameter.UniformBlockDataSize,
-                out mapBlockSize);
+                out int mapBlockSize);
 
             #region // Indexes and offsets of each block variable
             //// Query for the offsets of each block variable
@@ -175,6 +199,8 @@ namespace GldeTK
         {
             UpdateKeyInput();
             OnMouseMove();
+
+            camProj = SetCamera(camRo, camTa);
         }
 
         private bool IsKeyPressed(Key key)
@@ -227,7 +253,7 @@ namespace GldeTK
                 Vector3 invNorm = -norm;
                 invNorm *= (moveStep * norm).LengthFast;
 
-                camRo += moveStep - invNorm; // + wall sliding direction
+                camRo += moveStep - invNorm; // camRo + wall sliding direction
             }
         }
 
@@ -321,7 +347,8 @@ namespace GldeTK
             GL.Uniform1(uf_iGlobalTime, iGlobalTime);
             GL.Uniform3(uf_iResolution, Width, Height, 0.0f);
             GL.Uniform3(uf_CamRo, camRo);
-            GL.Uniform3(uf_CamTa, camTa);
+            GL.UniformMatrix3(um3_CamProj, false, ref camProj);
+            //GL.Uniform3(uf_CamTa, camTa);
 
             GL.BindBuffer(BufferTarget.UniformBuffer, ubo_GlobalMap);
             Vector4[] v = new Vector4[1];
@@ -345,7 +372,6 @@ namespace GldeTK
 
             GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
 
-            GL.Flush();
             GL.UseProgram(0);
             SwapBuffers();
         }

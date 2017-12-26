@@ -2,8 +2,9 @@
 
 uniform float iGlobalTime;
 uniform vec3 iResolution;
-uniform vec3 CamRo;
-uniform vec3 CamTa;
+uniform vec3 CamRo;	// camera ray origin
+//uniform vec3 CamTa;	// camera target
+uniform mat3 CamProj;	// camera projection matrix
 
 uniform SdElements
 {
@@ -178,24 +179,27 @@ mat3 setCamera(in vec3 ro, in vec3 ta)
 void main(void)
 {
 	// camera	
-	vec3 ro = CamRo;
-	vec3 ta = CamTa;
+	//vec3 ro = CamRo;
+	//vec3 ta = CamTa;
 
 	// camera-to-world transformation
-	mat3 ca = setCamera(ro, ta);
+	// moved to CPU side because of it is the same for all shaders
+	//mat3 ca = setCamera(CamRo, ta);
 
 	// ray direction
 	vec2 q = fragCoord.xy / iResolution.xy;
 	vec2 p = -1.0 + 2.0 * q;
 	p.x *= iResolution.x / iResolution.y;
 
-	vec3 rd = ca * normalize(vec3(p.xy, 2.0));
+	//vec3 rd = ca * normalize(vec3(p.xy, 2.0));
+	vec3 rd = CamProj * normalize(vec3(p.xy, 2.0));
 
 	// render	
-	vec3 col = render(ro, rd);
+	vec3 col = render(CamRo, rd);
 
 	// tint
 	col = pow(col, vec3(0.8545));
 
+	// result
 	gl_FragColor = vec4(col, 1.0);
 }

@@ -1,4 +1,5 @@
 ===TODO
+- Extract SetCamera from shader to the CPU and update matrix only if camera changes its position or target
 - Drawing text
 - Map in texture with primitives
 - Translate iGlobalTimer to the Phys engine
