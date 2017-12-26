@@ -1,13 +1,13 @@
-﻿#version 330
+﻿#version 330 core
 
 uniform float iGlobalTime;
 uniform vec3 iResolution;
 uniform vec3 CamRo;
 uniform vec3 CamTa;
 
-layout (std140) uniform GlobalMap
+uniform SdElements
 {
-	float sdElements[10];
+	vec4 g_map[256];
 };
 
 varying vec2 fragCoord;
@@ -51,14 +51,14 @@ vec2 map(in vec3 pos)
 	res.x =
 		opA(
 			res.x,
-			sdSphere(prep, sdElements[0]));
+			sdSphere(prep, g_map[0].x));
 	
 	prep = opRep(pos, vec3(7.0));
 
-	//res.x =
-	//	opA(
-	//		res.x,
-	//		sdBox(prep, vec3(1.0)));
+	res.x =
+		opA(
+			res.x,
+			sdBox(prep, g_map[0].yzw));
 
 	res.y = 45.0;
 

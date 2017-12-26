@@ -16,8 +16,8 @@ namespace GldeTK
         const string VERTEX_FILENAME = "GldeTK.shaders.vertex.c";
         const string GEOMETRY_FILENAME = "GldeTK.shaders.geometry.c";
         const string RELEASE_DATE = "2 Dec 2017";
-        const string UF_MAPELEMENTS_BLOCKNAME = "GlobalMap";
-        const int UF_MAPELEMENTS_BLOCK_LENGTH = 10;
+        const string UBO_SDELEMENTSMAP_BLOCKNAME = "SdElements";
+        const int UBO_SDELEMENTSMAP_BLOCKCOUNT = 256;
 
         Vector3 camRo = new Vector3(0.0f, 1.0f, 0);
         Vector3 camTa = new Vector3(0, 0.0f, 0);
@@ -32,7 +32,8 @@ namespace GldeTK
         int uf_iGlobalTime,
             uf_iResolution,
             uf_CamRo,
-            uf_CamTa;
+            uf_CamTa,
+            ubo_GlobalMap;
 
         public MainForm()
         {
@@ -94,11 +95,14 @@ namespace GldeTK
             GL.AttachShader(h_shaderProgram, h_fragment);
 
             GL.LinkProgram(h_shaderProgram);
-            CreateMapUbo();
-            GL.UseProgram(h_shaderProgram);
 
+            GL.DetachShader(h_shaderProgram, h_vertex);
+            GL.DetachShader(h_shaderProgram, h_fragment);
             GL.DeleteShader(h_vertex);      h_vertex = -1;
             GL.DeleteShader(h_fragment);    h_fragment = -1;
+
+            GL.UseProgram(h_shaderProgram);
+            CreateMapUbo();
 
             uf_iGlobalTime = GetUniformLocation("iGlobalTime");
             uf_iResolution = GetUniformLocation("iResolution");
@@ -108,11 +112,10 @@ namespace GldeTK
 
         private void CreateMapUbo()
         {
-            int binding_point = 0;
-            int block_index = GL.GetUniformBlockIndex(h_shaderProgram, UF_MAPELEMENTS_BLOCKNAME);
+            int binding_point = 1;
+            int block_index = GL.GetUniformBlockIndex(h_shaderProgram, UBO_SDELEMENTSMAP_BLOCKNAME);
             GL.UniformBlockBinding(h_shaderProgram, block_index, binding_point);
 
-#region aaaaaaaaaaa
             // Allocate space for the buffer
             int mapBlockSize;
             GL.GetActiveUniformBlock(
@@ -121,47 +124,41 @@ namespace GldeTK
                 ActiveUniformBlockParameter.UniformBlockDataSize,
                 out mapBlockSize);
 
-            // Query for the offsets of each block variable
-            var names =
-                new[] {
-                    "GlobalMap.sdElements"
-                };
+            #region // Indexes and offsets of each block variable
+            //// Query for the offsets of each block variable
+            //var names =
+            //    new[] {
+            //        "GlobalMap.sdElements"
+            //    };
 
-            var indices = new int[names.Length];
-            GL.GetUniformIndices(
-                h_shaderProgram,
-                names.Length,
-                names,
-                indices);
+            //var indices = new int[names.Length];
+            //GL.GetUniformIndices(
+            //    h_shaderProgram,
+            //    names.Length,
+            //    names,
+            //    indices);
 
-            var offset = new int[names.Length];
-            GL.GetActiveUniforms(
-                h_shaderProgram,
-                names.Length,
-                indices,
-                ActiveUniformParameter.UniformOffset,
-                offset);
+            //var offset = new int[names.Length];
+            //GL.GetActiveUniforms(
+            //    h_shaderProgram,
+            //    names.Length,
+            //    indices,
+            //    ActiveUniformParameter.UniformOffset,
+            //    offset);
             #endregion
 
             // Create the buffer object and copy the data
-            int buffer;
-            GL.GenBuffers(1, out buffer);
-            GL.BindBuffer(BufferTarget.UniformBuffer, buffer);
-
-            GlobalMapStruct mapBlock = new GlobalMapStruct { GlobalMap = new float[UF_MAPELEMENTS_BLOCK_LENGTH] };
-            for (int i = 0; i < mapBlock.GlobalMap.Length; i++)
-                mapBlock.GlobalMap[i] = 1.0f;
-            mapBlock.GlobalMap[0] = 10.0f;
-            mapBlock.GlobalMap[1] = 20.0f;
-            mapBlock.GlobalMap[2] = 30.0f;
+            GL.GenBuffers(1, out ubo_GlobalMap);
+            GL.BindBuffer(BufferTarget.UniformBuffer, ubo_GlobalMap);
 
             GL.BufferData(
                 BufferTarget.UniformBuffer,
-                mapBlock.GlobalMap.Length * sizeof(float),
-                ref mapBlock,
-                BufferUsageHint.DynamicDraw);
+                mapBlockSize,
+                (IntPtr)null,
+                BufferUsageHint.StreamDraw);
 
-            GL.BindBufferBase(BufferRangeTarget.UniformBuffer, binding_point, buffer);
+            GL.BindBufferBase(BufferRangeTarget.UniformBuffer, binding_point, ubo_GlobalMap);
+            GL.BindBuffer(BufferTarget.UniformBuffer, 0);
         }
 
         const float PLAYER_MOVE_SPEED = .2f;
@@ -301,7 +298,8 @@ namespace GldeTK
         double delta = 0;
         double lastTime = 0;
         double s1_timer = 0;
-        protected override void OnRenderFrame(FrameEventArgs e)
+
+        void DoTimers()
         {
             delta = stopwatch.ElapsedTicks - lastTime;
             lastTime = stopwatch.ElapsedTicks;
@@ -312,19 +310,49 @@ namespace GldeTK
                 Title = $"{APP_NAME} // {RELEASE_DATE} — {(delta * 0.0001).ToString("0.")}ms, {(10000000 / delta).ToString("0")}fps // {camRo.X.ToString("0.0")} : {camRo.Y.ToString("0.0")} : {camRo.Z.ToString("0.0")} ";
                 s1_timer = iGlobalTime;
             }
+        }
+
+        protected override void OnRenderFrame(FrameEventArgs e)
+        {
+            DoTimers();
+
+            GL.UseProgram(h_shaderProgram);
 
             GL.Uniform1(uf_iGlobalTime, iGlobalTime);
             GL.Uniform3(uf_iResolution, Width, Height, 0.0f);
             GL.Uniform3(uf_CamRo, camRo);
             GL.Uniform3(uf_CamTa, camTa);
 
+            GL.BindBuffer(BufferTarget.UniformBuffer, ubo_GlobalMap);
+            Vector4[] v = new Vector4[1];
+            v[0] = new Vector4(1, 1, 2, 1);
+
+            GL.BufferSubData<Vector4>(
+                BufferTarget.UniformBuffer,
+                (IntPtr)0,
+                16,
+                v
+                );
+
+            //float[] v = new float[4] { 1, 0, 0, 0 };
+
+            //GL.BufferSubData<float>(
+            //    BufferTarget.UniformBuffer,
+            //    (IntPtr)0,
+            //    16,
+            //    v
+            //    );
+
             GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
 
+            GL.Flush();
+            GL.UseProgram(0);
             SwapBuffers();
         }
 
         protected override void OnUnload(EventArgs e)
         {
+            GL.DeleteBuffers(1, ref ubo_GlobalMap);
             GL.DeleteProgram(h_shaderProgram);
             GL.DeleteShader(h_vertex);
             GL.DeleteShader(h_fragment);
