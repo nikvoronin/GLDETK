@@ -19,9 +19,7 @@ namespace GldeTK
         const string UBO_SDELEMENTSMAP_BLOCKNAME = "SdElements";
         const int UBO_SDELEMENTSMAP_BLOCKCOUNT = 256;
 
-        Vector3 camRo = new Vector3(0.0f, 1.0f, 0.0f);
-        Vector3 camTa = new Vector3(0.0f, 1.0f, -1.0f);
-        Matrix3 camProj = new Matrix3();
+        Camera camera;
 
         int FULLSCREEN_W = 1920,
             FULLSCREEN_H = 1080;
@@ -34,7 +32,6 @@ namespace GldeTK
             uf_iResolution,
             uf_CamRo,
             um3_CamProj,
-            //uf_CamTa,
             ubo_GlobalMap;
 
         public MainForm()
@@ -43,6 +40,13 @@ namespace GldeTK
             VSync = VSyncMode.Adaptive;
             Width = 1024;
             Height = 768;
+
+            camera =
+                new Camera(
+                    new Vector3(0.0f, 1.0f, 0.0f),
+                    new Vector3(0.0f, 1.0f, -1.0f),
+                    new Vector3(0.0f, 1.0f, 0.0f)
+                    );
         }
 
         float lastX, lastY;
@@ -61,8 +65,6 @@ namespace GldeTK
             stopwatch.Start();
 
             CreateShaders();
-
-            camProj = SetCamera(camRo, camTa);
 
             GL.Disable(EnableCap.DepthTest);
         }
@@ -112,27 +114,6 @@ namespace GldeTK
             uf_iResolution = GetUniformLocation("iResolution");
             uf_CamRo = GetUniformLocation("CamRo");
             um3_CamProj = GetUniformLocation("CamProj");
-            //uf_CamTa = GetUniformLocation("CamTa");
-        }
-
-        Matrix3 SetCamera(Vector3 ro, Vector3 ta, Vector3 up)
-        {
-            Vector3 cw = Vector3.Normalize(ta - ro);
-            Vector3 cu = Vector3.Normalize(Vector3.Cross(cw, up));
-            Vector3 cv = Vector3.Normalize(Vector3.Cross(cu, cw));
-
-            return
-                new Matrix3(cu, cv, cw);
-        }
-
-        Matrix3 SetCamera(Vector3 ro, Vector3 ta)
-        {
-            return
-                SetCamera(
-                    ro,
-                    ta,
-                    new Vector3(0.0f, 1.0f, 0.0f)
-                    );
         }
 
         private void CreateMapUbo()
@@ -186,8 +167,6 @@ namespace GldeTK
         }
 
         const float PLAYER_MOVE_SPEED = .2f;
-        Vector3 camFront = new Vector3(0.0f, 0.0f, -1.0f);
-        Vector3 camUp = new Vector3(0.0f, 1.0f, 0.0f).Normalized();
 
         protected override void OnResize(EventArgs e)
         {
@@ -199,8 +178,6 @@ namespace GldeTK
         {
             UpdateKeyInput();
             OnMouseMove();
-
-            camProj = SetCamera(camRo, camTa);
         }
 
         private bool IsKeyPressed(Key key)
@@ -215,45 +192,45 @@ namespace GldeTK
             Vector3 moveStep = Vector3.Zero;
 
             if (state.IsKeyDown(Key.W))
-                moveStep += camFront * PLAYER_MOVE_SPEED;
+                moveStep += camera.Front * PLAYER_MOVE_SPEED;
 
             if (state.IsKeyDown(Key.S))
-                moveStep -= camFront * PLAYER_MOVE_SPEED;
+                moveStep -= camera.Front * PLAYER_MOVE_SPEED;
 
             if (state.IsKeyDown(Key.A))
-                moveStep -= Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
+                moveStep -= Vector3.Normalize(Vector3.Cross(camera.Front, camera.Up)) * PLAYER_MOVE_SPEED;
 
             if (state.IsKeyDown(Key.D))
-                moveStep += Vector3.Normalize(Vector3.Cross(camFront, camUp)) * PLAYER_MOVE_SPEED;
+                moveStep += Vector3.Normalize(Vector3.Cross(camera.Front, camera.Up)) * PLAYER_MOVE_SPEED;
 
             if (state.IsKeyDown(Key.ShiftLeft))
-                moveStep -= camUp * PLAYER_MOVE_SPEED;
+                moveStep -= camera.Up * PLAYER_MOVE_SPEED;
 
             if (state.IsKeyDown(Key.Space))
             {
                 playerAcc = 0.0f;
-                moveStep += camUp * PLAYER_MOVE_SPEED;
+                moveStep += camera.Up * PLAYER_MOVE_SPEED;
             }
             else
                 playerAcc += PLAYER_MOVE_SPEED / 50;   // TODO should make gravity constant more phisical
 
             moveStep.Y -= playerAcc;  // gravity
 
-            float d = Phys.CastRay(camRo, moveStep.Normalized(), PLAYER_RADIUS);
+            float d = Phys.CastRay(camera.Origin, moveStep.Normalized(), PLAYER_RADIUS);
 
             if (d > PLAYER_RADIUS)
-                camRo += moveStep;
+                camera.Origin += moveStep;
             else
             {   // collide here
                 playerAcc = 0.0f;
 
                 // smooth wall sliding
-                Vector3 hitPoint = camRo + moveStep * PLAYER_RADIUS;
+                Vector3 hitPoint = camera.Origin + moveStep * PLAYER_RADIUS;
                 Vector3 norm = Phys.CalcNormal(hitPoint);
                 Vector3 invNorm = -norm;
                 invNorm *= (moveStep * norm).LengthFast;
 
-                camRo += moveStep - invNorm; // camRo + wall sliding direction
+                camera.Origin += moveStep - invNorm; // camRo + wall sliding direction
             }
         }
 
@@ -309,12 +286,7 @@ namespace GldeTK
                 if (pitch < -PID2)
                     pitch = -PID2;
 
-            camFront.X = (float)(Math.Cos(yaw) * Math.Cos(pitch));
-            camFront.Y = (float)(Math.Sin(pitch));
-            camFront.Z = (float)(Math.Sin(yaw) * Math.Cos(pitch));
-            camFront.NormalizeFast();
-
-            camTa = camFront + camRo;
+            camera.SetFront(yaw, pitch);
 
             lastX = ms.X;
             lastY = ms.Y;
@@ -333,7 +305,7 @@ namespace GldeTK
 
             if (iGlobalTime - s1_timer > 1)
             {
-                Title = $"{APP_NAME} // {RELEASE_DATE} — {(delta * 0.0001).ToString("0.")}ms, {(10000000 / delta).ToString("0")}fps // {camRo.X.ToString("0.0")} : {camRo.Y.ToString("0.0")} : {camRo.Z.ToString("0.0")} ";
+                Title = $"{APP_NAME} // {RELEASE_DATE} — {(delta * 0.0001).ToString("0.")}ms, {(10000000 / delta).ToString("0")}fps // {camera.Origin.X.ToString("0.0")} : {camera.Origin.Y.ToString("0.0")} : {camera.Origin.Z.ToString("0.0")} ";
                 s1_timer = iGlobalTime;
             }
         }
@@ -346,8 +318,8 @@ namespace GldeTK
 
             GL.Uniform1(uf_iGlobalTime, iGlobalTime);
             GL.Uniform3(uf_iResolution, Width, Height, 0.0f);
-            GL.Uniform3(uf_CamRo, camRo);
-            GL.UniformMatrix3(um3_CamProj, false, ref camProj);
+            GL.Uniform3(uf_CamRo, camera.Origin);
+            GL.UniformMatrix3(um3_CamProj, false, ref camera.Projection);
             //GL.Uniform3(uf_CamTa, camTa);
 
             GL.BindBuffer(BufferTarget.UniformBuffer, ubo_GlobalMap);

@@ -1,4 +1,5 @@
 ﻿using OpenTK;
+using System;
 
 namespace GldeTK
 {
@@ -8,7 +9,7 @@ namespace GldeTK
         Vector3 target = Vector3.Zero;
         Vector3 front;
         Vector3 up = new Vector3(0.0f, 1.0f, 0.0f);
-        Matrix3 projection = Matrix3.Zero;
+        public Matrix3 Projection = Matrix3.Zero;
 
         public Vector3 Origin
         {
@@ -18,7 +19,8 @@ namespace GldeTK
 
             set {
                 origin = value;
-                front = (target - origin).Normalized();
+                front = Vector3.NormalizeFast((target - origin));
+                Projection = GetProjection(origin, target, up);
             }
         }
 
@@ -31,6 +33,7 @@ namespace GldeTK
             set {
                 target = value;
                 front = (target - origin).Normalized();
+                Projection = GetProjection(origin, target, up);
             }
         }
 
@@ -45,6 +48,7 @@ namespace GldeTK
 
             set {
                 target = origin + value;
+                Projection = GetProjection(origin, target, up);
             }
         }
 
@@ -56,7 +60,7 @@ namespace GldeTK
 
             set {
                 up = value;
-                projection = GetProjection(origin, target, up);
+                Projection = GetProjection(origin, target, up);
             }
         }
 
@@ -69,18 +73,25 @@ namespace GldeTK
             Up = up;
         }
 
-        public Matrix3 Projection
+        /// <summary>
+        /// Set new Front of the Camera. Angles must be in radians.
+        /// </summary>
+        public void SetFront(float yaw, float pitch)
         {
-            get {
-                return projection;
-            }
+            Front =
+                Vector3.NormalizeFast(
+                    new Vector3(
+                        (float)(Math.Cos(yaw) * Math.Cos(pitch)),
+                        (float)(Math.Sin(pitch)),
+                        (float)(Math.Sin(yaw) * Math.Cos(pitch))
+                        ));
         }
 
         public static Matrix3 GetProjection(Vector3 origin, Vector3 target, Vector3 up)
         {
-            Vector3 cw = Vector3.Normalize(target - origin);
-            Vector3 cu = Vector3.Normalize(Vector3.Cross(cw, up));
-            Vector3 cv = Vector3.Normalize(Vector3.Cross(cu, cw));
+            Vector3 cw = Vector3.NormalizeFast(target - origin);
+            Vector3 cu = Vector3.NormalizeFast(Vector3.Cross(cw, up));
+            Vector3 cv = Vector3.NormalizeFast(Vector3.Cross(cu, cw));
 
             return
                 new Matrix3(cu, cv, cw);
