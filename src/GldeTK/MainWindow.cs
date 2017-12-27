@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 
 namespace GldeTK
 {
-    public class MainForm : GameWindow
+    public class MainWindow : GameWindow
     {
         const string APP_NAME = "GldeTK";
         const string FRAGMENT_FILENAME = "GldeTK.shaders.fragment.c";
@@ -20,6 +20,7 @@ namespace GldeTK
         const int UBO_SDELEMENTSMAP_BLOCKCOUNT = 256;
 
         Camera camera;
+        FpsController fpsController;
 
         int FULLSCREEN_W = 1920,
             FULLSCREEN_H = 1080;
@@ -34,28 +35,20 @@ namespace GldeTK
             um3_CamProj,
             ubo_GlobalMap;
 
-        public MainForm()
+        public MainWindow()
         {
             Title = APP_NAME;
             VSync = VSyncMode.Adaptive;
             Width = 1024;
             Height = 768;
 
-            camera =
-                new Camera(
-                    new Vector3(0.0f, 1.0f, 0.0f),
-                    new Vector3(0.0f, 1.0f, -1.0f),
-                    new Vector3(0.0f, 1.0f, 0.0f)
-                    );
-        }
+            camera = new Camera(
+                new Vector3(0.0f, 1.0f, 0.0f),
+                new Vector3(0.0f, 1.0f, -1.0f),
+                new Vector3(0.0f, 1.0f, 0.0f)
+                );
 
-        float lastX, lastY;
-        float yaw;
-        float pitch;
-
-        float ToRadians(float degree)
-        {
-            return ((float)Math.PI / 180f) * degree;
+            fpsController = new FpsController(camera);
         }
 
         Stopwatch stopwatch;
@@ -166,85 +159,26 @@ namespace GldeTK
             GL.BindBuffer(BufferTarget.UniformBuffer, 0);
         }
 
-        const float PLAYER_MOVE_SPEED = .2f;
 
         protected override void OnResize(EventArgs e)
         {
             GL.Viewport(0, 0, Width, Height);
         }
 
-        float playerAcc = 0.0f;
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-            UpdateKeyInput();
-            OnMouseMove();
+            fpsController.Update();
+            UpdateWindowKeys();
         }
 
-        private bool IsKeyPressed(Key key)
+        private void UpdateWindowKeys()
         {
-            KeyboardState state = Keyboard.GetState();
-            return state.IsKeyUp(key) && lastState.IsKeyDown(key);
-        }
+            KeyboardState keyboard = Keyboard.GetState();
 
-        const float PLAYER_RADIUS = 1.0f;
-        private void UpdatePlayerMove(KeyboardState state)
-        {
-            Vector3 moveStep = Vector3.Zero;
-
-            if (state.IsKeyDown(Key.W))
-                moveStep += camera.Front * PLAYER_MOVE_SPEED;
-
-            if (state.IsKeyDown(Key.S))
-                moveStep -= camera.Front * PLAYER_MOVE_SPEED;
-
-            if (state.IsKeyDown(Key.A))
-                moveStep -= Vector3.Normalize(Vector3.Cross(camera.Front, camera.Up)) * PLAYER_MOVE_SPEED;
-
-            if (state.IsKeyDown(Key.D))
-                moveStep += Vector3.Normalize(Vector3.Cross(camera.Front, camera.Up)) * PLAYER_MOVE_SPEED;
-
-            if (state.IsKeyDown(Key.ShiftLeft))
-                moveStep -= camera.Up * PLAYER_MOVE_SPEED;
-
-            if (state.IsKeyDown(Key.Space))
-            {
-                playerAcc = 0.0f;
-                moveStep += camera.Up * PLAYER_MOVE_SPEED;
-            }
-            else
-                playerAcc += PLAYER_MOVE_SPEED / 50;   // TODO should make gravity constant more phisical
-
-            moveStep.Y -= playerAcc;  // gravity
-
-            float d = Phys.CastRay(camera.Origin, moveStep.Normalized(), PLAYER_RADIUS);
-
-            if (d > PLAYER_RADIUS)
-                camera.Origin += moveStep;
-            else
-            {   // collide here
-                playerAcc = 0.0f;
-
-                // smooth wall sliding
-                Vector3 hitPoint = camera.Origin + moveStep * PLAYER_RADIUS;
-                Vector3 norm = Phys.CalcNormal(hitPoint);
-                Vector3 invNorm = -norm;
-                invNorm *= (moveStep * norm).LengthFast;
-
-                camera.Origin += moveStep - invNorm; // camRo + wall sliding direction
-            }
-        }
-
-        KeyboardState lastState = new KeyboardState();
-        private void UpdateKeyInput()
-        {
-            KeyboardState state = Keyboard.GetState();
-
-            UpdatePlayerMove(state);
-
-            if (state.IsKeyDown(Key.Escape))
+            if (keyboard.IsKeyDown(Key.Escape))
                 Exit();
 
-            if (IsKeyPressed(Key.F11))
+            if (keyboard.IsKeyUp(Key.F11) && fpsController.LastKeyboardState.IsKeyDown(Key.F11))
             {
                 if (WindowState == WindowState.Fullscreen)
                 {
@@ -265,32 +199,7 @@ namespace GldeTK
                     CursorVisible = false;
                 }
             } // if state F11
-
-            lastState = state;
-        } // UpdateKeyInput()
-
-        const float MOUSE_SENSITIVITY = .003f;
-        const float PI = 3.14152f;
-        const float PID2 = PI / 2f;
-
-        void OnMouseMove()
-        {
-            MouseState ms = Mouse.GetState();
-
-            yaw   += (ms.X - lastX) * MOUSE_SENSITIVITY;
-            pitch += (lastY - ms.Y) * MOUSE_SENSITIVITY;
-
-            if (pitch > PID2)
-                pitch = PID2;
-            else
-                if (pitch < -PID2)
-                    pitch = -PID2;
-
-            camera.SetFront(yaw, pitch);
-
-            lastX = ms.X;
-            lastY = ms.Y;
-        }
+        } // UpdateWindowKeys()
 
         float iGlobalTime = 0;
         double delta = 0;

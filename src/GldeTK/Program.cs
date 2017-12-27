@@ -7,9 +7,9 @@ namespace GldeTK
         [STAThread]
         static void Main()
         {
-            using (MainForm mainForm = new MainForm())
+            using (MainWindow mainWindow = new MainWindow())
             {
-                mainForm.Run();
+                mainWindow.Run();
             }
         }
     }
