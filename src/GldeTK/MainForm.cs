@@ -19,8 +19,8 @@ namespace GldeTK
         const string UBO_SDELEMENTSMAP_BLOCKNAME = "SdElements";
         const int UBO_SDELEMENTSMAP_BLOCKCOUNT = 256;
 
-        Vector3 camRo = new Vector3(0.0f, 1.0f, 0);
-        Vector3 camTa = new Vector3(0, 0.0f, 0);
+        Vector3 camRo = new Vector3(0.0f, 1.0f, 0.0f);
+        Vector3 camTa = new Vector3(0.0f, 1.0f, -1.0f);
         Matrix3 camProj = new Matrix3();
 
         int FULLSCREEN_W = 1920,
