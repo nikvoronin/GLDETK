@@ -1,5 +1,4 @@
 ===TODO
-- Make Camera class
 - Drawing text
 - Map in texture with primitives
 - Translate iGlobalTimer to the Phys engine
@@ -7,5 +6,6 @@
 
 
 ===DONE
-+ Extract SetCamera from shader to the CPU and update matrix only if camera changes its position or target
-+ print coordinates
+27.12.2017 13:37	Make Camera class
+26.12.2017 16:35	Extract SetCamera from shader to the CPU and update matrix only if camera changes its position or target
+02.12.2017 14:42	print coordinates

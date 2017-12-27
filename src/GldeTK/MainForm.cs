@@ -112,8 +112,8 @@ namespace GldeTK
 
             uf_iGlobalTime = GetUniformLocation("iGlobalTime");
             uf_iResolution = GetUniformLocation("iResolution");
-            uf_CamRo = GetUniformLocation("CamRo");
-            um3_CamProj = GetUniformLocation("CamProj");
+            uf_CamRo = GetUniformLocation("ro");
+            um3_CamProj = GetUniformLocation("camProj");
         }
 
         private void CreateMapUbo()
@@ -320,7 +320,6 @@ namespace GldeTK
             GL.Uniform3(uf_iResolution, Width, Height, 0.0f);
             GL.Uniform3(uf_CamRo, camera.Origin);
             GL.UniformMatrix3(um3_CamProj, false, ref camera.Projection);
-            //GL.Uniform3(uf_CamTa, camTa);
 
             GL.BindBuffer(BufferTarget.UniformBuffer, ubo_GlobalMap);
             Vector4[] v = new Vector4[1];
