@@ -1,50 +1,38 @@
 ﻿using OpenTK;
-using System;
 
 namespace GldeTK
 {
-    public class Camera
+    public class Camera : Ray
     {
-        Vector3 origin = Vector3.Zero;
-        Vector3 target = Vector3.Zero;
         Vector3 up = new Vector3(0.0f, 1.0f, 0.0f);
-        Vector3 front = Vector3.Zero;
         public Matrix3 Projection = Matrix3.Zero;
 
-        public Vector3 Origin
+        public override Vector3 Origin
         {
-            get => origin;
-
             set {
-                origin = value;
-                target = origin + front;
-                Projection = GetProjection(origin, target, up);
+                base.Origin = value;
+                UpdateProjection();
             }
         }
 
-        public Vector3 Target
+        public override Vector3 Target
         {
-            get => target;
-
             set
             {
-                target = value;
-                front = Vector3.NormalizeFast(target - origin);
-                Projection = GetProjection(origin, target, up);
+                base.Target = value;
+                UpdateProjection();
             }
         }
 
-        public Vector3 Up
+        public virtual Vector3 Up
         {
             get => up;
 
             set {
                 up = value;
-                Projection = GetProjection(origin, target, up);
+                UpdateProjection();
             }
         }
-
-        public Vector3 FrontDirection => front;
 
         public Camera() { }
 
@@ -53,22 +41,38 @@ namespace GldeTK
             this.origin = origin;
             this.target = target;
             this.up = up;
-            front = Vector3.NormalizeFast(target - origin);
+            UpdateFront();
         }
 
-        public void SetTarget(float yaw, float pitch)
+        public override void SetTarget(float yaw, float pitch)
         {
-            front =
-                Vector3.NormalizeFast(
-                    new Vector3(
-                        (float)(Math.Cos(yaw) * Math.Cos(pitch)),
-                        (float)(Math.Sin(pitch)),
-                        (float)(Math.Sin(yaw) * Math.Cos(pitch))
-                        ));
-
-            target = origin + front;
-            Projection = GetProjection(origin, target, up);
+            base.SetTarget(yaw, pitch);
+            UpdateProjection();
         }
+
+        /// <summary>
+        /// Set new origin of the Camera.
+        /// </summary>
+        /// <param name="origin">New camera's origin.</param>
+        public virtual void MoveTo(Vector3 origin)
+        {
+            this.origin = origin;
+            target = origin + front;
+            UpdateProjection();
+        }
+
+        /// <summary>
+        /// Shift camera's origin to Origin+Step and update target and front
+        /// </summary>
+        /// <param name="step">Translate shift</param>
+        public virtual void Translate(Vector3 step)
+        {
+            origin += step;
+            target = origin + front;
+            UpdateProjection();
+        }
+
+        protected void UpdateProjection() => Projection = GetProjection(origin, target, up);
 
         public static Matrix3 GetProjection(Vector3 origin, Vector3 target, Vector3 up)
         {

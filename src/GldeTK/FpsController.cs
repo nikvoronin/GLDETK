@@ -62,16 +62,16 @@ namespace GldeTK
             Vector3 moveStep = Vector3.Zero;
 
             if (keyboard.IsKeyDown(Key.W))
-                moveStep += camera.FrontDirection * motion_stepSize;
+                moveStep += camera.Front * motion_stepSize;
 
             if (keyboard.IsKeyDown(Key.S))
-                moveStep -= camera.FrontDirection * motion_stepSize;
+                moveStep -= camera.Front * motion_stepSize;
 
             if (keyboard.IsKeyDown(Key.A))
-                moveStep -= Vector3.Normalize(Vector3.Cross(camera.FrontDirection, camera.Up)) * motion_stepSize;
+                moveStep -= Vector3.Normalize(Vector3.Cross(camera.Front, camera.Up)) * motion_stepSize;
 
             if (keyboard.IsKeyDown(Key.D))
-                moveStep += Vector3.Normalize(Vector3.Cross(camera.FrontDirection, camera.Up)) * motion_stepSize;
+                moveStep += Vector3.Normalize(Vector3.Cross(camera.Front, camera.Up)) * motion_stepSize;
 
             if (keyboard.IsKeyDown(Key.ShiftLeft))
                 moveStep -= camera.Up * motion_stepSize;
@@ -89,7 +89,7 @@ namespace GldeTK
             float d = Phys.CastRay(camera.Origin, moveStep.Normalized(), player_hitRadius);
 
             if (d > player_hitRadius)
-                camera.Origin += moveStep;
+                camera.Translate(moveStep);
             else
             {   // collide here
                 motion_currentAcceleration = 0.0f;
@@ -100,7 +100,7 @@ namespace GldeTK
                 Vector3 invNorm = -norm;
                 invNorm *= (moveStep * norm).LengthFast;
 
-                camera.Origin += moveStep - invNorm; // camRo + wall sliding direction
+                camera.Translate(moveStep - invNorm); // camRo + wall sliding direction
             }
         }
 
