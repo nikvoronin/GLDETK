@@ -2,9 +2,8 @@
 
 namespace GldeTK
 {
-    public class Camera : Ray
+    public class Camera : RayUp
     {
-        Vector3 up = new Vector3(0.0f, 1.0f, 0.0f);
         public Matrix3 Projection = Matrix3.Zero;
 
         public override Vector3 Origin
@@ -24,12 +23,10 @@ namespace GldeTK
             }
         }
 
-        public virtual Vector3 Up
+        public override Vector3 Up
         {
-            get => up;
-
             set {
-                up = value;
+                base.Up = value;
                 UpdateProjection();
             }
         }

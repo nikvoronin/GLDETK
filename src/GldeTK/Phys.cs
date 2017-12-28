@@ -81,7 +81,7 @@ namespace GldeTK
 
             d = OpA(
                     d,
-                    SdBox(posRepeat, new Vector3(1.0f)));
+                    SdBox(posRepeat, new Vector3(1.0f, 2.0f, 1.0f)));
 
             return d;
         }
