@@ -48,7 +48,7 @@ namespace GldeTK
                 new Vector3(0.0f, 1.0f, 0.0f)
                 );
 
-            fpsController = new FpsController(camera);
+            fpsController = new FpsController();
         }
 
         Stopwatch stopwatch;
@@ -167,7 +167,7 @@ namespace GldeTK
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-            fpsController.Update();
+            fpsController.Update((float)e.Time, camera);
             UpdateWindowKeys();
         }
 
@@ -202,26 +202,22 @@ namespace GldeTK
         } // UpdateWindowKeys()
 
         float iGlobalTime = 0;
-        double delta = 0;
-        double lastTime = 0;
         double s1_timer = 0;
 
-        void DoTimers()
+        void DoTimers(double delta)
         {
-            delta = stopwatch.ElapsedTicks - lastTime;
-            lastTime = stopwatch.ElapsedTicks;
             iGlobalTime = stopwatch.ElapsedMilliseconds * 0.001f;
 
             if (iGlobalTime - s1_timer > 1)
             {
-                Title = $"{APP_NAME} // {RELEASE_DATE} — {(delta * 0.0001).ToString("0.")}ms, {(10000000 / delta).ToString("0")}fps // {camera.Origin.X.ToString("0.0")} : {camera.Origin.Y.ToString("0.0")} : {camera.Origin.Z.ToString("0.0")} ";
+                Title = $"{APP_NAME}, {RELEASE_DATE} — {(1 / delta).ToString("0")}fps [{(delta * 1000).ToString("0.")}ms] // {camera.Origin.X.ToString("0.0")} : {camera.Origin.Y.ToString("0.0")} : {camera.Origin.Z.ToString("0.0")} ";
                 s1_timer = iGlobalTime;
             }
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            DoTimers();
+            DoTimers(e.Time);
 
             GL.UseProgram(h_shaderProgram);
 

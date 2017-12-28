@@ -1,42 +1,29 @@
-﻿using System;
-using OpenTK;
+﻿using OpenTK;
 using OpenTK.Input;
 
 namespace GldeTK
 {
     public class FpsController
     {
-        public FpsController(Camera activeCamera)
-        {
-            ActiveCamera = activeCamera;
-            //mouselook_front = Vector3.NormalizeFast(camera.Target - camera.Origin);
-        }
+        public FpsController() { }
 
         /// <summary>
-        /// .001 is slower than .009
+        /// 0.1 is slower than 0.9
         /// </summary>
-        float mouse_sensitivity = .003f;
+        float mouse_sensitivity = 0.15f;
 
         /// <summary>
-        /// From 1 to 100. 30 by default
+        /// From 1 to 100. 15 by default
         /// </summary>
         public float MouseSensitivity
         {
-            get => mouse_sensitivity * 10000f;
-            set => mouse_sensitivity = value / 10000f;
+            get => mouse_sensitivity * 100f;
+            set => mouse_sensitivity = value / 100f;
         }
 
-        float motion_stepSize = .2f;
-        float motion_currentAcceleration = .0f;
+        float motion_Speed = 5f;
+        float motion_fallSpeed = .0f;
         float player_hitRadius = 1.0f;   // TODO change later
-
-        //Vector3 mouselook_front;
-        private Camera camera = null;
-        public Camera ActiveCamera
-        {
-            set => camera = value;
-            get => camera;
-        }
 
         MouseState lastMouse = new MouseState();
         public MouseState LastMouseState => lastMouse;
@@ -45,66 +32,69 @@ namespace GldeTK
         float yaw = 0.0f;
         float pitch = 0.0f;
 
-        public void Update()
+        public void Update(float delta, Camera camera)
         {
             var keyboard = Keyboard.GetState();
             var mouse = Mouse.GetState();
 
-            UpdateKeyboard(keyboard);
-            UpdateMouse(mouse);
+            UpdateKeyboard(keyboard, delta, camera);
+            UpdateMouse(mouse, delta, camera);
 
             lastKeyboard = keyboard;
             lastMouse = mouse;
         }
 
-        protected void UpdateKeyboard(KeyboardState keyboard)
+        protected void UpdateKeyboard(KeyboardState keyboard, float delta, Camera camera)
         {
-            Vector3 moveStep = Vector3.Zero;
+            Vector3 nextStep = Vector3.Zero;
+
+            float deltaStep = motion_Speed * delta;
 
             if (keyboard.IsKeyDown(Key.W))
-                moveStep += camera.Front * motion_stepSize;
+                nextStep += camera.Front * deltaStep;
 
             if (keyboard.IsKeyDown(Key.S))
-                moveStep -= camera.Front * motion_stepSize;
+                nextStep -= camera.Front * deltaStep;
 
             if (keyboard.IsKeyDown(Key.A))
-                moveStep -= Vector3.Normalize(Vector3.Cross(camera.Front, camera.Up)) * motion_stepSize;
+                nextStep -= Vector3.Normalize(Vector3.Cross(camera.Front, camera.Up)) * deltaStep;
 
             if (keyboard.IsKeyDown(Key.D))
-                moveStep += Vector3.Normalize(Vector3.Cross(camera.Front, camera.Up)) * motion_stepSize;
+                nextStep += Vector3.Normalize(Vector3.Cross(camera.Front, camera.Up)) * deltaStep;
 
             if (keyboard.IsKeyDown(Key.ShiftLeft))
-                moveStep -= camera.Up * motion_stepSize;
+                nextStep -= camera.Up * deltaStep;
 
             if (keyboard.IsKeyDown(Key.Space))
             {
-                motion_currentAcceleration = 0.0f;
-                moveStep += camera.Up * motion_stepSize;
+                motion_fallSpeed = 0.0f;
+                nextStep += camera.Up * deltaStep;
             }
             else
-                motion_currentAcceleration += motion_stepSize / 50;   // TODO should make gravity constant more phisical
+            {
+                motion_fallSpeed += 9.8f * delta;
+                nextStep -= camera.Up * motion_fallSpeed * delta;  // gravity
+            }
 
-            moveStep.Y -= motion_currentAcceleration;  // gravity
-
-            float d = Phys.CastRay(camera.Origin, moveStep.Normalized(), player_hitRadius);
+            float d = Phys.CastRay(camera.Origin, nextStep.Normalized(), player_hitRadius);
 
             if (d > player_hitRadius)
-                camera.Translate(moveStep);
+                camera.Translate(nextStep);
             else
             {   // collide here
-                motion_currentAcceleration = 0.0f;
+                motion_fallSpeed = 0.0f;
 
                 // smooth wall sliding
-                Vector3 hitPoint = camera.Origin + moveStep * player_hitRadius;
+                Vector3 hitPoint = camera.Origin + nextStep * player_hitRadius;
                 Vector3 norm = Phys.CalcNormal(hitPoint);
                 Vector3 invNorm = -norm;
-                invNorm *= (moveStep * norm).LengthFast;
+                invNorm *= (nextStep * norm).LengthFast;
 
-                camera.Translate(moveStep - invNorm); // camRo + wall sliding direction
+                camera.Translate(nextStep - invNorm); // camRo + wall sliding direction
             }
         }
 
-        protected void UpdateMouse(MouseState mouse)
+        protected void UpdateMouse(MouseState mouse, float delta, Camera camera)
         {
             int deltaX = mouse.X - lastMouse.X;
             int deltaY = lastMouse.Y - mouse.Y;
@@ -112,8 +102,8 @@ namespace GldeTK
             if ((deltaX == 0) && (deltaY == 0))
                 return;
 
-            yaw += deltaX * mouse_sensitivity;
-            pitch += deltaY * mouse_sensitivity;
+            yaw += deltaX * mouse_sensitivity * delta;
+            pitch += deltaY * mouse_sensitivity * delta;
 
             if (pitch > MathHelper.PiOver2)
                 pitch = MathHelper.PiOver2;
