@@ -12,30 +12,19 @@ namespace GldeTK
         public virtual Vector3 Origin
         {
             get => origin;
-
-            set
-            {
-                origin = value;
-                UpdateFront();
-            }
+            set => origin = value;
         }
 
         public virtual Vector3 Target
         {
             get => target;
-
-            set
-            {
-                target = value;
-                UpdateFront();
-            }
+            set => target = value;
         }
 
         /// <summary>
         /// Front direction of the Ray. Always normalized
         /// </summary>
         public Vector3 Front => front;
-        protected void UpdateFront() => front = Vector3.NormalizeFast(target - origin);
 
         public Ray() { }
 
@@ -45,6 +34,8 @@ namespace GldeTK
             this.target = target;
             UpdateFront();
         }
+
+        protected void UpdateFront() => front = Vector3.NormalizeFast(target - origin);
 
         public virtual void SetTarget(float yaw, float pitch)
         {

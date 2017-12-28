@@ -165,9 +165,30 @@ namespace GldeTK
             GL.Viewport(0, 0, Width, Height);
         }
 
+        float player_hitRadius = 1.0f;   // TODO change later
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-            fpsController.Update((float)e.Time, camera);
+            RayUp nextStep = camera.RayUpCopy;
+            fpsController.Update((float)e.Time, nextStep);
+
+            float d = Phys.CastRay(camera.Origin, Vector3.NormalizeFast(nextStep.Origin), player_hitRadius);
+
+            if (d > player_hitRadius)
+                camera.Translate(nextStep);
+            else
+            {   // collide here
+                camera.Target = nextStep.Target;    // view only
+                //motion_fallSpeed = 0.0f;
+
+                //// smooth wall sliding
+                //Vector3 hitPoint = camera.Origin + nextStep * player_hitRadius;
+                //Vector3 norm = Phys.CalcNormal(hitPoint);
+                //Vector3 invNorm = -norm;
+                //invNorm *= (nextStep * norm).LengthFast;
+
+                //camera.Translate(nextStep - invNorm); // camRo + wall sliding direction
+            }
+
             UpdateWindowKeys();
         }
 
@@ -210,7 +231,7 @@ namespace GldeTK
 
             if (iGlobalTime - s1_timer > 1)
             {
-                Title = $"{APP_NAME}, {RELEASE_DATE} — {(1 / delta).ToString("0")}fps [{(delta * 1000).ToString("0.")}ms] // {camera.Origin.X.ToString("0.0")} : {camera.Origin.Y.ToString("0.0")} : {camera.Origin.Z.ToString("0.0")} ";
+                Title = $"{APP_NAME}, {RELEASE_DATE} — {(delta * 1000).ToString("0.")}ms, {(1 / delta).ToString("0")}fps // {camera.Origin.X.ToString("0.0")} : {camera.Origin.Y.ToString("0.0")} : {camera.Origin.Z.ToString("0.0")} ";
                 s1_timer = iGlobalTime;
             }
         }

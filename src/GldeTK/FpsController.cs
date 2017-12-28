@@ -23,7 +23,6 @@ namespace GldeTK
 
         float motion_Speed = 5f;
         float motion_fallSpeed = .0f;
-        float player_hitRadius = 1.0f;   // TODO change later
 
         MouseState lastMouse = new MouseState();
         public MouseState LastMouseState => lastMouse;
@@ -32,69 +31,53 @@ namespace GldeTK
         float yaw = 0.0f;
         float pitch = 0.0f;
 
-        public void Update(float delta, Camera camera)
+        public void Update(float delta, RayUp nextStep)
         {
             var keyboard = Keyboard.GetState();
             var mouse = Mouse.GetState();
 
-            UpdateKeyboard(keyboard, delta, camera);
-            UpdateMouse(mouse, delta, camera);
+            UpdateMouse(mouse, delta, nextStep);
+            UpdateKeyboard(keyboard, delta, nextStep);
 
             lastKeyboard = keyboard;
             lastMouse = mouse;
         }
 
-        protected void UpdateKeyboard(KeyboardState keyboard, float delta, Camera camera)
+        protected void UpdateKeyboard(KeyboardState keyboard, float delta, RayUp nextStep)
         {
-            Vector3 nextStep = Vector3.Zero;
+            nextStep.Origin = Vector3.Zero;
 
             float deltaStep = motion_Speed * delta;
 
             if (keyboard.IsKeyDown(Key.W))
-                nextStep += camera.Front * deltaStep;
+                nextStep.Origin += nextStep.Front * deltaStep;
 
             if (keyboard.IsKeyDown(Key.S))
-                nextStep -= camera.Front * deltaStep;
+                nextStep.Origin -= nextStep.Front * deltaStep;
 
             if (keyboard.IsKeyDown(Key.A))
-                nextStep -= Vector3.Normalize(Vector3.Cross(camera.Front, camera.Up)) * deltaStep;
+                nextStep.Origin -= Vector3.Normalize(Vector3.Cross(nextStep.Front, nextStep.Up)) * deltaStep;
 
             if (keyboard.IsKeyDown(Key.D))
-                nextStep += Vector3.Normalize(Vector3.Cross(camera.Front, camera.Up)) * deltaStep;
+                nextStep.Origin += Vector3.Normalize(Vector3.Cross(nextStep.Front, nextStep.Up)) * deltaStep;
 
             if (keyboard.IsKeyDown(Key.ShiftLeft))
-                nextStep -= camera.Up * deltaStep;
+                nextStep.Origin -= nextStep.Up * deltaStep;
 
+            // TODO gravity to Phys level
             if (keyboard.IsKeyDown(Key.Space))
             {
                 motion_fallSpeed = 0.0f;
-                nextStep += camera.Up * deltaStep;
+                nextStep.Origin += nextStep.Up * deltaStep;
             }
             else
             {
                 motion_fallSpeed += 9.8f * delta;
-                nextStep -= camera.Up * motion_fallSpeed * delta;  // gravity
-            }
-
-            float d = Phys.CastRay(camera.Origin, nextStep.Normalized(), player_hitRadius);
-
-            if (d > player_hitRadius)
-                camera.Translate(nextStep);
-            else
-            {   // collide here
-                motion_fallSpeed = 0.0f;
-
-                // smooth wall sliding
-                Vector3 hitPoint = camera.Origin + nextStep * player_hitRadius;
-                Vector3 norm = Phys.CalcNormal(hitPoint);
-                Vector3 invNorm = -norm;
-                invNorm *= (nextStep * norm).LengthFast;
-
-                camera.Translate(nextStep - invNorm); // camRo + wall sliding direction
+                nextStep.Origin -= nextStep.Up * motion_fallSpeed * delta;  // gravity
             }
         }
 
-        protected void UpdateMouse(MouseState mouse, float delta, Camera camera)
+        protected void UpdateMouse(MouseState mouse, float delta, RayUp nextStep)
         {
             int deltaX = mouse.X - lastMouse.X;
             int deltaY = lastMouse.Y - mouse.Y;
@@ -112,7 +95,7 @@ namespace GldeTK
                 pitch = -MathHelper.PiOver2;
 
             /// Sets new Front of the Camera. Angles must be in radians.
-            camera.SetTarget(yaw, pitch);
+            nextStep.SetTarget(yaw, pitch);
         }
     }
 }

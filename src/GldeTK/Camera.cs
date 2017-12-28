@@ -8,8 +8,10 @@ namespace GldeTK
 
         public override Vector3 Origin
         {
-            set {
+            set
+            {
                 base.Origin = value;
+                UpdateFront();
                 UpdateProjection();
             }
         }
@@ -19,14 +21,17 @@ namespace GldeTK
             set
             {
                 base.Target = value;
+                UpdateFront();
                 UpdateProjection();
             }
         }
 
         public override Vector3 Up
         {
-            set {
+            set
+            {
                 base.Up = value;
+                UpdateFront();
                 UpdateProjection();
             }
         }
@@ -39,7 +44,10 @@ namespace GldeTK
             this.target = target;
             this.up = up;
             UpdateFront();
+            UpdateProjection();
         }
+
+        public virtual RayUp RayUpCopy => new RayUp(origin, target, up);
 
         public override void SetTarget(float yaw, float pitch)
         {
@@ -48,24 +56,15 @@ namespace GldeTK
         }
 
         /// <summary>
-        /// Set new origin of the Camera.
-        /// </summary>
-        /// <param name="origin">New camera's origin.</param>
-        public virtual void MoveTo(Vector3 origin)
-        {
-            this.origin = origin;
-            target = origin + front;
-            UpdateProjection();
-        }
-
-        /// <summary>
         /// Shift camera's origin to Origin+Step and update target and front
         /// </summary>
         /// <param name="step">Translate shift</param>
-        public virtual void Translate(Vector3 step)
+        public virtual void Translate(RayUp ray)
         {
-            origin += step;
-            target = origin + front;
+            origin += ray.Origin;
+            target = origin + ray.Front;
+
+            UpdateFront();
             UpdateProjection();
         }
 
