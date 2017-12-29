@@ -11,7 +11,6 @@ namespace GldeTK
             set
             {
                 base.Origin = value;
-                UpdateFront();
                 UpdateProjection();
             }
         }
@@ -21,7 +20,6 @@ namespace GldeTK
             set
             {
                 base.Target = value;
-                UpdateFront();
                 UpdateProjection();
             }
         }
@@ -31,19 +29,14 @@ namespace GldeTK
             set
             {
                 base.Up = value;
-                UpdateFront();
                 UpdateProjection();
             }
         }
 
         public Camera() { }
 
-        public Camera(Vector3 origin, Vector3 target, Vector3 up)
+        public Camera(Vector3 origin, Vector3 target, Vector3 up) : base(origin, target, up)
         {
-            this.origin = origin;
-            this.target = target;
-            this.up = up;
-            UpdateFront();
             UpdateProjection();
         }
 
@@ -62,9 +55,8 @@ namespace GldeTK
         public virtual void Translate(Ray ray)
         {
             origin += ray.Origin;
-            target = origin + ray.Front;
+            Target = ray.Target;
 
-            UpdateFront();
             UpdateProjection();
         }
 
@@ -72,12 +64,11 @@ namespace GldeTK
 
         public static Matrix3 GetProjection(Vector3 origin, Vector3 target, Vector3 up)
         {
-            Vector3 cw = Vector3.NormalizeFast(target - origin);
-            Vector3 cu = Vector3.NormalizeFast(Vector3.Cross(cw, up));
-            Vector3 cv = Vector3.NormalizeFast(Vector3.Cross(cu, cw));
+            Vector3 cu = Vector3.NormalizeFast(Vector3.Cross(target, up));
+            Vector3 cv = Vector3.NormalizeFast(Vector3.Cross(cu, target));
 
             return
-                new Matrix3(cu, cv, cw);
+                new Matrix3(cu, cv, target);
         }
     }
 }

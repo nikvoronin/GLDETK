@@ -50,16 +50,16 @@ namespace GldeTK
             float deltaStep = motion_Speed * delta;
 
             if (keyboard.IsKeyDown(Key.W))
-                nextStep.Origin += nextStep.Front * deltaStep;
+                nextStep.Origin += nextStep.Target * deltaStep;
 
             if (keyboard.IsKeyDown(Key.S))
-                nextStep.Origin -= nextStep.Front * deltaStep;
+                nextStep.Origin -= nextStep.Target * deltaStep;
 
             if (keyboard.IsKeyDown(Key.A))
-                nextStep.Origin -= Vector3.Normalize(Vector3.Cross(nextStep.Front, nextStep.Up)) * deltaStep;
+                nextStep.Origin -= Vector3.Normalize(Vector3.Cross(nextStep.Target, nextStep.Up)) * deltaStep;
 
             if (keyboard.IsKeyDown(Key.D))
-                nextStep.Origin += Vector3.Normalize(Vector3.Cross(nextStep.Front, nextStep.Up)) * deltaStep;
+                nextStep.Origin += Vector3.Normalize(Vector3.Cross(nextStep.Target, nextStep.Up)) * deltaStep;
 
             if (keyboard.IsKeyDown(Key.ShiftLeft))
                 nextStep.Origin -= nextStep.Up * deltaStep;
