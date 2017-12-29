@@ -4,7 +4,6 @@ using OpenTK.Graphics.OpenGL4;
 using System;
 using System.IO;
 using System.Reflection;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace GldeTK
@@ -51,12 +50,8 @@ namespace GldeTK
             fpsController = new FpsController();
         }
 
-        Stopwatch stopwatch;
         protected override void OnLoad(EventArgs e)
         {
-            stopwatch = new Stopwatch();
-            stopwatch.Start();
-
             CreateShaders();
 
             GL.Disable(EnableCap.DepthTest);
@@ -191,8 +186,7 @@ namespace GldeTK
             sd = Phys.CastRay(
                 camera.Origin,
                 Vector3.NormalizeFast(motionStep.Origin),
-                player_hitRadius
-                );
+                player_hitRadius );
 
             // when wall collide
             if (sd <= player_hitRadius)
@@ -244,11 +238,11 @@ namespace GldeTK
         } // UpdateWindowKeys()
 
         float iGlobalTime = 0;
-        double s1_timer = 0;
+        double s1_timer = 0;    // smooth fps printing
 
-        void DoTimers(double delta)
+        void DoTimers(float delta)
         {
-            iGlobalTime = stopwatch.ElapsedMilliseconds * 0.001f;
+            iGlobalTime += delta;
 
             if (iGlobalTime - s1_timer > 1)
             {
@@ -259,7 +253,7 @@ namespace GldeTK
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            DoTimers(e.Time);
+            DoTimers((float)e.Time);
 
             GL.UseProgram(h_shaderProgram);
 
