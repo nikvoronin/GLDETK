@@ -177,20 +177,26 @@ namespace GldeTK
         {
             float delta = (float)e.Time;
 
+            // update player input (keyboard_wasd+space+shift + mouse-look)
             Ray motionStep = fpsController.Update(delta, camera.RayCopy);
 
             float sd = 0f;
 
-            // gravity
-            //Ray gravityStep = new Ray();
-            //Phys.Gravity(delta, camera.RayCopy, nextStep, player_hitRadius);
+            // gravity free fall
+            Vector3 freeFallVector = phy.Gravity(
+                delta,
+                camera.RayCopy,
+                player_hitRadius,
+                motionStep.Origin.Y > 0
+                );
 
+            // wall collide
             sd = phy.CastRay(
                 camera.Origin,
-                Vector3.NormalizeFast(motionStep.Origin),
-                player_hitRadius );
+                Vector3.NormalizeFast(motionStep.Origin)
+                );
 
-            // when wall collide
+            // when hit the wall
             if (sd <= player_hitRadius)
             {   
                 camera.Target = motionStep.Target;    // view only
@@ -204,6 +210,7 @@ namespace GldeTK
                 motionStep.Origin -= invNorm;
             }
 
+            motionStep.Origin += freeFallVector;
             camera.Translate(motionStep);
 
             UpdateWindowKeys();

@@ -109,9 +109,8 @@ namespace GldeTK
         /// </summary>
         /// <param name="ro">Ray origin</param>
         /// <param name="rd">Ray direction</param>
-        /// <param name="playerR">Radius of the player's capsule</param>
         /// <returns></returns>
-        public float CastRay(Vector3 ro, Vector3 rd, float playerR)
+        public float CastRay(Vector3 ro, Vector3 rd)
         {
             //TODO move to external constants w/ uniq names
             const int MAX_RAY_STEPS = 10;
@@ -137,23 +136,24 @@ namespace GldeTK
 
         float motion_fallSpeed = .0f;
         float phys_freeFallAccel = 9.8f;
-        public void Gravity(float delta, Vector3 origin, Ray nextStep, float player_hitRadius)
+        public Vector3 Gravity(float delta, Ray rayOrigin, float player_hitRadius, bool stopFallTrick = false)
         {
-            if (nextStep.Origin.Y <= 0)
-                motion_fallSpeed += phys_freeFallAccel * delta;
+            if (stopFallTrick)
+                motion_fallSpeed = 0f;  // stop fall
             else
-                motion_fallSpeed = 0f;
+                motion_fallSpeed += phys_freeFallAccel * delta; // free fall
 
-            Vector3 fallVector = new Vector3(-nextStep.Up * motion_fallSpeed * delta);
-            float sd = CastRay(origin, Vector3.NormalizeFast(fallVector), player_hitRadius);
-            // when hit any surface
+            Vector3 fallVector = new Vector3(-rayOrigin.Up * motion_fallSpeed * delta);
+            float sd = CastRay(rayOrigin.Origin, Vector3.NormalizeFast(fallVector));
+            
+            // when hit bottom surface
             if (sd <= player_hitRadius)
             {
                 motion_fallSpeed = 0f;
                 fallVector = Vector3.Zero;
             }
 
-            nextStep.Origin += fallVector;
+            return fallVector;
         }
     } // class
 }
