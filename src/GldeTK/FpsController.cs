@@ -22,7 +22,6 @@ namespace GldeTK
         }
 
         float motion_Speed = 5f;
-        float motion_fallSpeed = .0f;
 
         MouseState lastMouse = new MouseState();
         public MouseState LastMouseState => lastMouse;
@@ -64,17 +63,8 @@ namespace GldeTK
             if (keyboard.IsKeyDown(Key.ShiftLeft))
                 nextStep.Origin -= nextStep.Up * deltaStep;
 
-            // TODO gravity to Phys level
             if (keyboard.IsKeyDown(Key.Space))
-            {
-                motion_fallSpeed = 0.0f;
                 nextStep.Origin += nextStep.Up * deltaStep;
-            }
-            else
-            {
-                motion_fallSpeed += 9.8f * delta;
-                nextStep.Origin -= nextStep.Up * motion_fallSpeed * delta;  // gravity
-            }
         }
 
         protected void UpdateMouse(MouseState mouse, float delta, Ray nextStep)

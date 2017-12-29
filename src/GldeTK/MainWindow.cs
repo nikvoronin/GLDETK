@@ -176,28 +176,34 @@ namespace GldeTK
         }
 
         float player_hitRadius = 1.0f;   // TODO change later
+        float motion_fallSpeed = .0f;
+        float phys_freeFallAccel = 9.8f;
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             Ray nextStep = camera.RayCopy;
             fpsController.Update((float)e.Time, nextStep);
 
+            // gravity
+            //motion_fallSpeed += phys_freeFallAccel * (float)e.Time;
+            //nextStep.Origin -= nextStep.Up * motion_fallSpeed * (float)e.Time;  // gravity
+
             float d = Phys.CastRay(camera.Origin, Vector3.NormalizeFast(nextStep.Origin), player_hitRadius);
 
-            if (d > player_hitRadius)
-                camera.Translate(nextStep);
-            else
-            {   // collide here
+            // when collide
+            if (d <= player_hitRadius)
+            {   
                 camera.Target = nextStep.Target;    // view only
-                //motion_fallSpeed = 0.0f;
 
-                //// smooth wall sliding
-                //Vector3 hitPoint = camera.Origin + nextStep * player_hitRadius;
-                //Vector3 norm = Phys.CalcNormal(hitPoint);
-                //Vector3 invNorm = -norm;
-                //invNorm *= (nextStep * norm).LengthFast;
+                // smooth wall sliding
+                Vector3 hitPoint = camera.Origin + nextStep.Origin * player_hitRadius;
+                Vector3 norm = Phys.CalcNormal(hitPoint);
+                Vector3 invNorm = -norm;
+                invNorm *= (nextStep.Origin * norm).LengthFast;
 
-                //camera.Translate(nextStep - invNorm); // camRo + wall sliding direction
+                nextStep.Origin -= invNorm;
             }
+
+            camera.Translate(nextStep);
 
             UpdateWindowKeys();
         }
