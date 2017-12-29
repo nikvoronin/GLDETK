@@ -176,34 +176,39 @@ namespace GldeTK
         }
 
         float player_hitRadius = 1.0f;   // TODO change later
-        float motion_fallSpeed = .0f;
-        float phys_freeFallAccel = 9.8f;
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-            Ray nextStep = camera.RayCopy;
-            fpsController.Update((float)e.Time, nextStep);
+            float delta = (float)e.Time;
+
+            Ray motionStep = fpsController.Update(delta, camera.RayCopy);
+
+            float sd = 0f;
 
             // gravity
-            //motion_fallSpeed += phys_freeFallAccel * (float)e.Time;
-            //nextStep.Origin -= nextStep.Up * motion_fallSpeed * (float)e.Time;  // gravity
+            //Ray gravityStep = new Ray();
+            //Phys.Gravity(delta, camera.RayCopy, nextStep, player_hitRadius);
 
-            float d = Phys.CastRay(camera.Origin, Vector3.NormalizeFast(nextStep.Origin), player_hitRadius);
+            sd = Phys.CastRay(
+                camera.Origin,
+                Vector3.NormalizeFast(motionStep.Origin),
+                player_hitRadius
+                );
 
-            // when collide
-            if (d <= player_hitRadius)
+            // when wall collide
+            if (sd <= player_hitRadius)
             {   
-                camera.Target = nextStep.Target;    // view only
+                camera.Target = motionStep.Target;    // view only
 
                 // smooth wall sliding
-                Vector3 hitPoint = camera.Origin + nextStep.Origin * player_hitRadius;
+                Vector3 hitPoint = camera.Origin + motionStep.Origin * player_hitRadius;
                 Vector3 norm = Phys.CalcNormal(hitPoint);
                 Vector3 invNorm = -norm;
-                invNorm *= (nextStep.Origin * norm).LengthFast;
+                invNorm *= (motionStep.Origin * norm).LengthFast;
 
-                nextStep.Origin -= invNorm;
+                motionStep.Origin -= invNorm;
             }
 
-            camera.Translate(nextStep);
+            camera.Translate(motionStep);
 
             UpdateWindowKeys();
         }

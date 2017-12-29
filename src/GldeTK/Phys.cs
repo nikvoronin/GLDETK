@@ -132,5 +132,26 @@ namespace GldeTK
 
             return t;
         }
+
+        static float motion_fallSpeed = .0f;
+        static float phys_freeFallAccel = 9.8f;
+        public static void Gravity(float delta, Vector3 origin, Ray nextStep, float player_hitRadius)
+        {
+            if (nextStep.Origin.Y <= 0)
+                motion_fallSpeed += phys_freeFallAccel * delta;
+            else
+                motion_fallSpeed = 0f;
+
+            Vector3 fallVector = new Vector3(-nextStep.Up * motion_fallSpeed * delta);
+            float sd = Phys.CastRay(origin, Vector3.NormalizeFast(fallVector), player_hitRadius);
+            // when hit any surface
+            if (sd <= player_hitRadius)
+            {
+                motion_fallSpeed = 0f;
+                fallVector = Vector3.Zero;
+            }
+
+            nextStep.Origin += fallVector;
+        }
     } // class
 }

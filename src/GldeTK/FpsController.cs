@@ -22,6 +22,7 @@ namespace GldeTK
         }
 
         float motion_Speed = 5f;
+        float motion_jumpImpulse = 3f;
 
         MouseState lastMouse = new MouseState();
         public MouseState LastMouseState => lastMouse;
@@ -30,16 +31,20 @@ namespace GldeTK
         float yaw = 0.0f;
         float pitch = 0.0f;
 
-        public void Update(float delta, Ray nextStep)
+        public Ray Update(float delta, Ray rayOrigin)
         {
             var keyboard = Keyboard.GetState();
             var mouse = Mouse.GetState();
 
-            UpdateMouse(mouse, delta, nextStep);
-            UpdateKeyboard(keyboard, delta, nextStep);
+            Ray motionStep = rayOrigin;
+
+            UpdateMouse(mouse, delta, motionStep);
+            UpdateKeyboard(keyboard, delta, motionStep);
 
             lastKeyboard = keyboard;
             lastMouse = mouse;
+
+            return motionStep;
         }
 
         protected void UpdateKeyboard(KeyboardState keyboard, float delta, Ray nextStep)
@@ -64,7 +69,7 @@ namespace GldeTK
                 nextStep.Origin -= nextStep.Up * deltaStep;
 
             if (keyboard.IsKeyDown(Key.Space))
-                nextStep.Origin += nextStep.Up * deltaStep;
+                nextStep.Origin += nextStep.Up * deltaStep * motion_jumpImpulse;
         }
 
         protected void UpdateMouse(MouseState mouse, float delta, Ray nextStep)
