@@ -1,0 +1,38 @@
+===PRIMITIVES
+position (vec3 pos) on the input on all elements
+	Sphera
+		vec3: pos
+		float: radius
+		
+	Plane
+		vec3: pos
+		vec3: normal
+		float: distance from the origin
+		
+	Box
+		vec3: pos
+		vec3: size
+		
+	Cylinder
+		vec3: pos
+		float: radius
+		float height
+		
+	Capsule
+		vec3: pos
+		float: r	????????/
+		float: c	?????????
+	
+	Torus
+		vec3: pos
+		float: small radius
+		float: big radius
+		
+	Cone
+		vec3: pos
+		float: radius
+		float: height
+
+===DOMAIN MANIPULATION OPERATORS
+	Repeat
+		vec3: float

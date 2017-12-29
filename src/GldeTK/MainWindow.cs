@@ -219,12 +219,12 @@ namespace GldeTK
 
         private void UpdateWindowKeys()
         {
-            KeyboardState keyboard = Keyboard.GetState();
+            var keyboard = Keyboard.GetState();
 
             if (keyboard.IsKeyDown(Key.Escape))
                 Exit();
 
-            if (keyboard.IsKeyUp(Key.F11) && fpsController.LastKeyboardState.IsKeyDown(Key.F11))
+            if (fpsController.LastKeyboardState.IsKeyDown(Key.F11) )
             {
                 if (WindowState == WindowState.Fullscreen)
                 {

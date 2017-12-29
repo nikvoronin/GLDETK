@@ -7,6 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GldeTK", "GldeTK\GldeTK.csp
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8D4BE5E7-97BD-43EC-8B2F-E168EA6A11C8}"
 	ProjectSection(SolutionItems) = preProject
+		language.txt = language.txt
 		TODO.txt = TODO.txt
 	EndProjectSection
 EndProject

@@ -30,6 +30,19 @@ namespace GldeTK
                     Math.Max(v1.Z, s));
         }
 
+        Vector3 Mod3(Vector3 v1, Vector3 v2)
+        {
+            if (v2.X == 0)
+                v2.X = float.MinValue;
+            if (v2.Y == 0)
+                v2.Y = float.MinValue;
+            if (v2.Z == 0)
+                v2.Z = float.MinValue;
+
+            return
+                new Vector3(Math.Abs(v1.X % v2.X), Math.Abs(v1.Y % v2.Y), Math.Abs(v1.Z % v2.Z));
+        }
+
         // Signed Distance Functions ----------------------------------------------------------------------
 
         float SdPlaneY(Vector3 p)
@@ -60,7 +73,8 @@ namespace GldeTK
         Vector3 OpRep(Vector3 p, Vector3 c)
         {
             return
-                new Vector3(Math.Abs(p.X % c.X), Math.Abs(p.Y % c.Y), Math.Abs(p.Z % c.Z)) - 0.5f * c;
+                Mod3(p, c) - 0.5f * c;
+                //new Vector3(Math.Abs(p.X % c.X), Math.Abs(p.Y % c.Y), Math.Abs(p.Z % c.Z)) - 0.5f * c;
                 //mod(p, c) - 0.5 * c;
         }
 
@@ -76,7 +90,13 @@ namespace GldeTK
                     d,
                     SdSphere(posRepeat, 1.0f));
 
-            posRepeat = OpRep(pos, new Vector3(7.0f));
+            posRepeat = OpRep(pos, new Vector3(7f, 0f, 9f));
+
+            d = OpA(
+                    d,
+                    SdBox(posRepeat, new Vector3(1.0f, 2.0f, 1.0f)));
+
+            posRepeat = OpRep(pos, new Vector3(12f, 4f, 13f));
 
             d = OpA(
                     d,

@@ -65,6 +65,8 @@ namespace GldeTK
             if (keyboard.IsKeyDown(Key.D))
                 nextStep.Origin += Vector3.Normalize(Vector3.Cross(nextStep.Target, nextStep.Up)) * deltaStep;
 
+            nextStep.Origin *= new Vector3(1f, 0f, 1f);
+
             if (keyboard.IsKeyDown(Key.ShiftLeft))
                 nextStep.Origin -= nextStep.Up * deltaStep;
 
@@ -83,11 +85,12 @@ namespace GldeTK
             yaw += deltaX * mouse_sensitivity * delta;
             pitch += deltaY * mouse_sensitivity * delta;
 
-            if (pitch > MathHelper.PiOver2)
-                pitch = MathHelper.PiOver2;
+            const float EPS = 0.001f;
+            if (pitch >= MathHelper.PiOver2 - EPS)
+                pitch = MathHelper.PiOver2 - EPS;
             else
-                if (pitch < -MathHelper.PiOver2)
-                pitch = -MathHelper.PiOver2;
+                if (pitch <= -MathHelper.PiOver2 + EPS)
+                pitch = -MathHelper.PiOver2 + EPS;
 
             /// Sets new Front of the Camera. Angles must be in radians.
             nextStep.SetTarget(yaw, pitch);

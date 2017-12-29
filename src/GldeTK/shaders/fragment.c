@@ -53,7 +53,14 @@ vec2 map(in vec3 pos)
 			res.x,
 			sdSphere(prep, g_map[0].x));
 	
-	prep = opRep(pos, vec3(7.0));
+	prep = opRep(pos, vec3(7.0, 0.0, 9.0));
+
+	res.x =
+		opA(
+			res.x,
+			sdBox(prep, g_map[0].yzw));
+
+	prep = opRep(pos, vec3(12.0, 4.0, 13.0));
 
 	res.x =
 		opA(
