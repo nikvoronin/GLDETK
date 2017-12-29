@@ -61,6 +61,14 @@ namespace GldeTK
             return p.LengthFast - r;
         }
 
+        float SdCylinder(Vector3 p, float r, float h)
+        {
+            return 
+                Math.Max(
+                p.Xz.LengthFast - r,
+                Math.Abs(p.Y) - h);
+        }
+
         float SdBox(Vector3 p, Vector3 b)
         {
             Vector3 d = AbsV3(p) - b;
@@ -102,11 +110,11 @@ namespace GldeTK
                     d,
                     SdBox(posRepeat, new Vector3(1.0f, 2.0f, 1.0f)));
 
-            posRepeat = OpRep(pos, new Vector3(12f, 4f, 13f));
+            posRepeat = OpRep(pos, new Vector3(12f, 0f, 13f));
 
             d = OpA(
                     d,
-                    SdCylinderInf(posRepeat, 1.0f));
+                    SdCylinder(posRepeat, 1.0f, 30.0f));
 
             return d;
         }

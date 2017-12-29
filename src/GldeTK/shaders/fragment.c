@@ -70,12 +70,12 @@ vec2 map(in vec3 pos)
 			res.x,
 			sdBox(prep, g_map[0].yzw));
 
-	prep = opRep(pos, vec3(12.0, 4.0, 13.0));
+	prep = opRep(pos, vec3(12.0, 0.0, 13.0));
 
 	res.x =
 		opA(
 			res.x,
-			sdCylinderInf(prep, 1.0));
+			sdCylinder(prep, 1.0, 30.0));
 
 	res.y = 45.0;
 
