@@ -31,7 +31,7 @@ namespace GldeTK
         float yaw = 0.0f;
         float pitch = 0.0f;
 
-        public void Update(float delta, RayUp nextStep)
+        public void Update(float delta, Ray nextStep)
         {
             var keyboard = Keyboard.GetState();
             var mouse = Mouse.GetState();
@@ -43,7 +43,7 @@ namespace GldeTK
             lastMouse = mouse;
         }
 
-        protected void UpdateKeyboard(KeyboardState keyboard, float delta, RayUp nextStep)
+        protected void UpdateKeyboard(KeyboardState keyboard, float delta, Ray nextStep)
         {
             nextStep.Origin = Vector3.Zero;
 
@@ -77,7 +77,7 @@ namespace GldeTK
             }
         }
 
-        protected void UpdateMouse(MouseState mouse, float delta, RayUp nextStep)
+        protected void UpdateMouse(MouseState mouse, float delta, Ray nextStep)
         {
             int deltaX = mouse.X - lastMouse.X;
             int deltaY = lastMouse.Y - mouse.Y;

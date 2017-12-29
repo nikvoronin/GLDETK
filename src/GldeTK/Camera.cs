@@ -2,7 +2,7 @@
 
 namespace GldeTK
 {
-    public class Camera : RayUp
+    public class Camera : Ray
     {
         public Matrix3 Projection = Matrix3.Zero;
 
@@ -47,7 +47,7 @@ namespace GldeTK
             UpdateProjection();
         }
 
-        public virtual RayUp RayUpCopy => new RayUp(origin, target, up);
+        public virtual Ray RayCopy => new Ray(origin, target, up);
 
         public override void SetTarget(float yaw, float pitch)
         {
@@ -59,7 +59,7 @@ namespace GldeTK
         /// Shift camera's origin to Origin+Step and update target and front
         /// </summary>
         /// <param name="step">Translate shift</param>
-        public virtual void Translate(RayUp ray)
+        public virtual void Translate(Ray ray)
         {
             origin += ray.Origin;
             target = origin + ray.Front;

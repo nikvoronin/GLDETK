@@ -168,7 +168,7 @@ namespace GldeTK
         float player_hitRadius = 1.0f;   // TODO change later
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-            RayUp nextStep = camera.RayUpCopy;
+            Ray nextStep = camera.RayCopy;
             fpsController.Update((float)e.Time, nextStep);
 
             float d = Phys.CastRay(camera.Origin, Vector3.NormalizeFast(nextStep.Origin), player_hitRadius);
