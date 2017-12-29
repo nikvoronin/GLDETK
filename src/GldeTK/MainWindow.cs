@@ -95,10 +95,8 @@ namespace GldeTK
 
             GL.LinkProgram(h_shaderProgram);
 
-            GL.DetachShader(h_shaderProgram, h_vertex);
-            GL.DetachShader(h_shaderProgram, h_fragment);
-            GL.DeleteShader(h_vertex);      h_vertex = -1;
-            GL.DeleteShader(h_fragment);    h_fragment = -1;
+            RemoveShader(h_shaderProgram, h_vertex);
+            RemoveShader(h_shaderProgram, h_fragment);
 
             GL.UseProgram(h_shaderProgram);
             CreateMapUbo();
@@ -107,6 +105,18 @@ namespace GldeTK
             uf_iResolution = GetUniformLocation("iResolution");
             uf_CamRo = GetUniformLocation("ro");
             um3_CamProj = GetUniformLocation("camProj");
+        }
+
+        /// <summary>
+        /// Detach than delete shader
+        /// </summary>
+        /// <param name="h_program">Shader program name index</param>
+        /// <param name="h_index">Shader name index</param>
+        private void RemoveShader(int h_program, int h_index)
+        {
+            GL.DetachShader(h_program, h_index);
+            GL.DeleteShader(h_index);
+            h_index = -1;
         }
 
         private void CreateMapUbo()
@@ -277,8 +287,8 @@ namespace GldeTK
         {
             GL.DeleteBuffers(1, ref ubo_GlobalMap);
             GL.DeleteProgram(h_shaderProgram);
-            GL.DeleteShader(h_vertex);
-            GL.DeleteShader(h_fragment);
+            RemoveShader(h_shaderProgram, h_vertex);
+            RemoveShader(h_shaderProgram, h_fragment);
 
             base.OnClosed(e);
         }
