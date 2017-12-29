@@ -50,7 +50,6 @@ namespace GldeTK
                 MaxV3(d, 0.0f).LengthFast;
         }
 
-
         // Domain operations ----------------------------------------------------------------------
 
         float OpA(float d1, float d2)
@@ -62,7 +61,7 @@ namespace GldeTK
         {
             return
                 new Vector3(Math.Abs(p.X % c.X), Math.Abs(p.Y % c.Y), Math.Abs(p.Z % c.Z)) - 0.5f * c;
-            //mod(p, c) - 0.5 * c;
+                //mod(p, c) - 0.5 * c;
         }
 
         // Map projection and raycaster systems ----------------------------------------------------------------------

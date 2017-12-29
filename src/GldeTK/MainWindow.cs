@@ -190,6 +190,8 @@ namespace GldeTK
                 motionStep.Origin.Y > 0
                 );
 
+            motionStep.Origin += freeFallVector;
+
             // wall collide
             sd = phy.CastRay(
                 camera.Origin,
@@ -210,7 +212,6 @@ namespace GldeTK
                 motionStep.Origin -= invNorm;
             }
 
-            motionStep.Origin += freeFallVector;
             camera.Translate(motionStep);
 
             UpdateWindowKeys();

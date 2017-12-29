@@ -68,7 +68,7 @@ vec2 map(in vec3 pos)
 vec2 castRay(in vec3 ro, in vec3 rd)
 {
 	//TODO move to external constants w/ uniq names
-	const float MAX_DIST = 100;
+	const float MAX_DIST = 1000;
 	const float MIN_DIST = 0.0002;
 	const int MAX_RAY_STEPS = 100;
 
