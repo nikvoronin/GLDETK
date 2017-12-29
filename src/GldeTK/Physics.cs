@@ -3,16 +3,16 @@ using System;
 
 namespace GldeTK
 {
-    public static class Phys
+    public class Physics
     {
         // Utils ----------------------------------------------------------------------
-        static Vector3 AbsV3(Vector3 v)
+        Vector3 AbsV3(Vector3 v)
         {
             return
                 new Vector3(Math.Abs(v.X), Math.Abs(v.Y), Math.Abs(v.Z));
         }
 
-        static Vector3 MaxV3(Vector3 v1, Vector3 v2)
+        Vector3 MaxV3(Vector3 v1, Vector3 v2)
         {
             return
                 new Vector3(
@@ -21,7 +21,7 @@ namespace GldeTK
                     Math.Max(v1.Z, v2.Z) );
         }
 
-        static Vector3 MaxV3(Vector3 v1, float s)
+        Vector3 MaxV3(Vector3 v1, float s)
         {
             return
                 new Vector3(
@@ -32,17 +32,17 @@ namespace GldeTK
 
         // Signed Distance Functions ----------------------------------------------------------------------
 
-        static float SdPlaneY(Vector3 p)
+        float SdPlaneY(Vector3 p)
         {
             return p.Y;
         }
 
-        static float SdSphere(Vector3 p, float s)
+        float SdSphere(Vector3 p, float s)
         {
             return p.LengthFast - s;
         }
 
-        static float SdBox(Vector3 p, Vector3 b)
+        float SdBox(Vector3 p, Vector3 b)
         {
             Vector3 d = AbsV3(p) - b;
             return
@@ -53,12 +53,12 @@ namespace GldeTK
 
         // Domain operations ----------------------------------------------------------------------
 
-        static float OpA(float d1, float d2)
+        float OpA(float d1, float d2)
         {
             return Math.Min(d2, d1);
         }
 
-        static Vector3 OpRep(Vector3 p, Vector3 c)
+        Vector3 OpRep(Vector3 p, Vector3 c)
         {
             return
                 new Vector3(Math.Abs(p.X % c.X), Math.Abs(p.Y % c.Y), Math.Abs(p.Z % c.Z)) - 0.5f * c;
@@ -67,7 +67,7 @@ namespace GldeTK
 
         // Map projection and raycaster systems ----------------------------------------------------------------------
 
-        static float Map(Vector3 pos)
+        float Map(Vector3 pos)
         {
             float d = SdPlaneY(pos);
 
@@ -87,17 +87,19 @@ namespace GldeTK
         }
 
         const float EPS = 0.001f;
-        static Vector3 eps_xyy = new Vector3(EPS, 0.0f, 0.0f);
-        static Vector3 eps_yxy = new Vector3(0.0f, EPS, 0.0f);
-        static Vector3 eps_yyx = new Vector3(0.0f, 0.0f, EPS);
-        public static Vector3 CalcNormal(Vector3 pos)
+        Vector3 eps_xyy = new Vector3(EPS, 0.0f, 0.0f);
+        Vector3 eps_yxy = new Vector3(0.0f, EPS, 0.0f);
+        Vector3 eps_yyx = new Vector3(0.0f, 0.0f, EPS);
+        public Vector3 GetSurfaceNormal(Vector3 pos)
         {
-            Vector3 nor = new Vector3(
-                Map(pos + eps_xyy) - Map(pos - eps_xyy),
-                Map(pos + eps_yxy) - Map(pos - eps_yxy),
-                Map(pos + eps_yyx) - Map(pos - eps_yyx));
+            Vector3 n = Vector3.NormalizeFast(
+                new Vector3(
+                    Map(pos + eps_xyy) - Map(pos - eps_xyy),
+                    Map(pos + eps_yxy) - Map(pos - eps_yxy),
+                    Map(pos + eps_yyx) - Map(pos - eps_yyx)
+                    ));
 
-            return nor.Normalized();
+            return n;
         }
 
 
@@ -109,7 +111,7 @@ namespace GldeTK
         /// <param name="rd">Ray direction</param>
         /// <param name="playerR">Radius of the player's capsule</param>
         /// <returns></returns>
-        public static float CastRay(Vector3 ro, Vector3 rd, float playerR)
+        public float CastRay(Vector3 ro, Vector3 rd, float playerR)
         {
             //TODO move to external constants w/ uniq names
             const int MAX_RAY_STEPS = 10;
@@ -133,9 +135,9 @@ namespace GldeTK
             return t;
         }
 
-        static float motion_fallSpeed = .0f;
-        static float phys_freeFallAccel = 9.8f;
-        public static void Gravity(float delta, Vector3 origin, Ray nextStep, float player_hitRadius)
+        float motion_fallSpeed = .0f;
+        float phys_freeFallAccel = 9.8f;
+        public void Gravity(float delta, Vector3 origin, Ray nextStep, float player_hitRadius)
         {
             if (nextStep.Origin.Y <= 0)
                 motion_fallSpeed += phys_freeFallAccel * delta;
@@ -143,7 +145,7 @@ namespace GldeTK
                 motion_fallSpeed = 0f;
 
             Vector3 fallVector = new Vector3(-nextStep.Up * motion_fallSpeed * delta);
-            float sd = Phys.CastRay(origin, Vector3.NormalizeFast(fallVector), player_hitRadius);
+            float sd = CastRay(origin, Vector3.NormalizeFast(fallVector), player_hitRadius);
             // when hit any surface
             if (sd <= player_hitRadius)
             {

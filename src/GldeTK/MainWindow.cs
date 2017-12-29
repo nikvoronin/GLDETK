@@ -20,6 +20,7 @@ namespace GldeTK
 
         Camera camera;
         FpsController fpsController;
+        Physics phy;
 
         int FULLSCREEN_W = 1920,
             FULLSCREEN_H = 1080;
@@ -47,6 +48,7 @@ namespace GldeTK
                     new Vector3(0, 1, 0)
                     );
 
+            phy = new Physics();
             fpsController = new FpsController();
         }
 
@@ -183,7 +185,7 @@ namespace GldeTK
             //Ray gravityStep = new Ray();
             //Phys.Gravity(delta, camera.RayCopy, nextStep, player_hitRadius);
 
-            sd = Phys.CastRay(
+            sd = phy.CastRay(
                 camera.Origin,
                 Vector3.NormalizeFast(motionStep.Origin),
                 player_hitRadius );
@@ -195,7 +197,7 @@ namespace GldeTK
 
                 // smooth wall sliding
                 Vector3 hitPoint = camera.Origin + motionStep.Origin * player_hitRadius;
-                Vector3 norm = Phys.CalcNormal(hitPoint);
+                Vector3 norm = phy.GetSurfaceNormal(hitPoint);
                 Vector3 invNorm = -norm;
                 invNorm *= (motionStep.Origin * norm).LengthFast;
 
