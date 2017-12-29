@@ -181,15 +181,10 @@ void main(void)
 	vec2 q = fragCoord.xy / iResolution.xy;
 	vec2 p = -1.0 + 2.0 * q;
 	p.x *= iResolution.x / iResolution.y;
-
 	vec3 rd = camProj * normalize(vec3(p.xy, 2.0));
 
-	// render	
 	vec3 col = render(ro, rd);
 
-	// tint
-	col = pow(col, vec3(0.8545));
-
-	// result
+		col = pow(col, vec3(0.8545)); // tint
 	gl_FragColor = vec4(col, 1.0);
 }
