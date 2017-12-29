@@ -34,5 +34,38 @@ position (vec3 pos) on the input on all elements
 		float: height
 
 ===DOMAIN MANIPULATION OPERATORS
-	Repeat
-		vec3: float
+All operation return new position as vec3
+All ops input original position
+
+	Repeat : vec3
+		vec3: pos
+		vec3: element origin step
+
+	Translate
+
+	Rotate
+
+	Scale
+	
+	Mirror
+
+	Replect
+
+===OBJECT MANIPULATION OPERATORS
+All operation return distance as float
+All ops input original position
+
+	Union : float
+		float: object 1
+		float: object 2
+
+	Substraction : float
+		float: object 1
+		float: object 2
+
+	Intersection : float
+		float: object 1
+		float: object 2
+
+	...Camfer
+	...Round

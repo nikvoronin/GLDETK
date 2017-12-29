@@ -28,6 +28,16 @@ float sdBox(vec3 p, vec3 b)
 	return min(max(d.x, max(d.y, d.z)), 0.0) + length(max(d, 0.0));
 }
 
+float sdCylinder(vec3 p, float r, float height) {
+	float d = length(p.xz) - r;
+	d = max(d, abs(p.y) - height);
+	return d;
+}
+
+float sdCylinderInf(vec3 p, float r) {
+	return  length(p.xz) - r;
+}
+
 //----------------------------------------------------------------------
 
 float opA(float d1, float d2)
@@ -65,7 +75,7 @@ vec2 map(in vec3 pos)
 	res.x =
 		opA(
 			res.x,
-			sdBox(prep, g_map[0].yzw));
+			sdCylinderInf(prep, 1.0));
 
 	res.y = 45.0;
 

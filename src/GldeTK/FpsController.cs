@@ -10,7 +10,7 @@ namespace GldeTK
         /// <summary>
         /// 0.1 is slower than 0.9
         /// </summary>
-        float mouse_sensitivity = 0.15f;
+        float mouse_sensitivity = 0.10f;
 
         /// <summary>
         /// From 1 to 100. 15 by default
@@ -25,9 +25,7 @@ namespace GldeTK
         float motion_jumpImpulse = 3f;
 
         MouseState lastMouse = new MouseState();
-        public MouseState LastMouseState => lastMouse;
         KeyboardState lastKeyboard = new KeyboardState();
-        public KeyboardState LastKeyboardState => lastKeyboard;
         float yaw = 0.0f;
         float pitch = 0.0f;
 

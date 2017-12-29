@@ -214,17 +214,18 @@ namespace GldeTK
 
             camera.Translate(motionStep);
 
-            UpdateWindowKeys();
+            var keyboard = Keyboard.GetState();
+            UpdateWindowKeys(keyboard);
+            lastKeyboard = keyboard;
         }
 
-        private void UpdateWindowKeys()
+        KeyboardState lastKeyboard = new KeyboardState();
+        private void UpdateWindowKeys(KeyboardState keyboard)
         {
-            var keyboard = Keyboard.GetState();
-
             if (keyboard.IsKeyDown(Key.Escape))
                 Exit();
 
-            if (fpsController.LastKeyboardState.IsKeyDown(Key.F11) )
+            if (keyboard[Key.F11] && (lastKeyboard[Key.F11] != keyboard[Key.F11]))
             {
                 if (WindowState == WindowState.Fullscreen)
                 {

@@ -55,6 +55,12 @@ namespace GldeTK
             return p.LengthFast - s;
         }
 
+        float SdCylinderInf(Vector3 p, float r)
+        {
+            p.Y = 0f;
+            return p.LengthFast - r;
+        }
+
         float SdBox(Vector3 p, Vector3 b)
         {
             Vector3 d = AbsV3(p) - b;
@@ -100,7 +106,7 @@ namespace GldeTK
 
             d = OpA(
                     d,
-                    SdBox(posRepeat, new Vector3(1.0f, 2.0f, 1.0f)));
+                    SdCylinderInf(posRepeat, 1.0f));
 
             return d;
         }
