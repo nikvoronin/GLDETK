@@ -14,7 +14,7 @@ namespace GldeTK
         const string FRAGMENT_FILENAME = "GldeTK.shaders.fragment.c";
         const string VERTEX_FILENAME = "GldeTK.shaders.vertex.c";
         const string GEOMETRY_FILENAME = "GldeTK.shaders.geometry.c";
-        const string RELEASE_DATE = "2 Dec 2017";
+        const string RELEASE_DATE = "30 Dec 2017";
         const string UBO_SDELEMENTSMAP_BLOCKNAME = "SdElements";
         const int UBO_SDELEMENTSMAP_BLOCKCOUNT = 256;
 

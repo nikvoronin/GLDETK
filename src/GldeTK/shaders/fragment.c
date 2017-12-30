@@ -87,7 +87,7 @@ vec2 castRay(in vec3 ro, in vec3 rd)
 	//TODO move to external constants w/ uniq names
 	const float MAX_DIST = 1000;
 	const float MIN_DIST = 0.0002;
-	const int MAX_RAY_STEPS = 100;
+	const int MAX_RAY_STEPS = 1000;
 
 	float t = 0.0;
 	vec2 h = vec2(1.0);
@@ -123,17 +123,25 @@ vec2 castRay(in vec3 ro, in vec3 rd)
 }
 
 // TODO generalize over map() it similar
-float softshadow(in vec3 ro, in vec3 rd, in float mint, in float tmax)
+float softshadow(in vec3 ro, in vec3 rd)
 {
+	const float INIT_T = 0.02;
+	const float INIT_RES = 0.1;
+	const float MAX_DIST = 25;
+	const float MIN_DIST = 0.001;
+	const int MAX_RAY_STEPS = 64;		// higher -> longer shadow distance
+	const float SHADOW_SMOOTH = 8.0;	// lower ~ smother, higher -> sharper
+
 	float res = 1.0;
-	float t = mint;
-	for (int i = 0; i < 64; i++)
+	float t = INIT_T;
+	for (int i = 0; i < MAX_RAY_STEPS; i++)
 	{
-		float h = map(ro + rd*t).x;
-		res = min(res, 8.0*h / t);
-		t += clamp(h, 0.02, 0.10);
-		if (h<0.0002 || t>tmax) break;
+		float h = map(ro + rd * t).x;
+		res = min(res, SHADOW_SMOOTH * h / t);
+		t += clamp(h, INIT_T, INIT_RES);
+		if (h < MIN_DIST || t > MAX_DIST) break;
 	}
+
 	return clamp(res, 0.0, 1.0);
 
 }
@@ -167,7 +175,7 @@ vec3 render(in vec3 ro, in vec3 rd)
 		float dif = clamp(dot(nor, lig), 0.0, 1.0);
 		float spe = pow(clamp(dot(ref, lig), 0.0, 1.0), 16.0);
 
-		dif *= softshadow(pos, lig, 0.02, 25);
+		dif *= softshadow(pos, lig);
 
 		vec3 lin = vec3(0.0);
 		lin += dif;
