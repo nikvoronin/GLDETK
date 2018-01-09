@@ -52,35 +52,37 @@ vec3 opRep(vec3 p, vec3 c)
 
 //----------------------------------------------------------------------
 
-float map(in vec3 pos)
+vec2 map(in vec3 pos)
 {
-	float d = sdPlaneY(pos);
+	vec2 res = vec2(sdPlaneY(pos), 1.0);
 
 	vec3 prep = opRep(pos, vec3(10.0));
 
-	d =
+	res.x =
 		opA(
-			d,
+			res.x,
 			sdSphere(prep, g_map[0].x));
 	
 	prep = opRep(pos, vec3(7.0, 0.0, 9.0));
 
-	d =
+	res.x =
 		opA(
-			d,
+			res.x,
 			sdBox(prep, g_map[0].yzw));
 
 	prep = opRep(pos, vec3(12.0, 0.0, 13.0));
 
-	d =
+	res.x =
 		opA(
-			d,
+			res.x,
 			sdCylinder(prep, 1.0, 30.0));
 
-	return d;
+	res.y = 45.0;
+
+	return res;
 }
 
-float castRay(in vec3 ro, in vec3 rd)
+vec2 castRay(in vec3 ro, in vec3 rd)
 {
 	//TODO move to external constants w/ uniq names
 	const float MAX_DIST = 100;
@@ -88,34 +90,65 @@ float castRay(in vec3 ro, in vec3 rd)
 	const int MAX_RAY_STEPS = 100;
 
 	float t = 0.0;
+	vec2 h = vec2(1.0);
 	float overstep = 0.0;
 	float phx = MAX_DIST;
 
 	int i = 0;
 	while (i < MAX_RAY_STEPS && t < MAX_DIST)
 	{
-		float d = map(ro + rd * t);
+		h = map(ro + rd * t);
 
-		if (d > overstep)
+		if (h.x > overstep)
 		{
-			overstep = d * min(1.0, 0.5 * d / phx);
-			t += d * 0.5 + overstep;
-			phx = d;
+			overstep = h.x * min(1.0, 0.5 * h.x / phx);
+			t += h.x * 0.5 + overstep;
+			phx = h.x;
 			i++;
 		}
 		else
 		{
 			t -= overstep;
 			phx = MAX_DIST;
-			d = 1.0;
+			h.x = 1.0;
 			overstep = 0.0;
 		}
 
-		if (d < MIN_DIST || t > MAX_DIST)
+		if (h.x < MIN_DIST || t > MAX_DIST)
 			break;
 	}
 
-	return t;
+	return vec2(t, h.y);
+}
+
+// classic
+vec2 castRay2(in vec3 ro, in vec3 rd)
+{
+	//TODO move to external constants w/ uniq names
+	const float MAX_DIST = 1000;
+	const float MIN_DIST = 0.0002;
+	const int MAX_RAY_STEPS = 100;
+
+	float t = 0.0;
+	vec2 h = vec2(1.0);
+
+	int i = 0;
+	while(i < MAX_RAY_STEPS && t < MAX_DIST)
+	{
+		h = map(ro + rd * t);
+
+		if (h.x < MIN_DIST)
+			break;
+
+		t += h.x;
+
+		i++;
+	}
+
+	if (t > MAX_DIST)
+		h.y = -1.0;
+
+	return vec2(t, h.y);
 }
 
 // TODO generalize over map() it similar
@@ -128,19 +161,17 @@ float softshadow(in vec3 ro, in vec3 rd)
 	const int MAX_RAY_STEPS = 64;		// higher -> longer shadow distance
 	const float SHADOW_SMOOTH = 8.0;	// lower ~ smother, higher -> sharper
 
-	float shade = 1.0;
+	float res = 1.0;
 	float t = INIT_T;
-	int i = 0;
-	while (i < MAX_RAY_STEPS && t < MAX_DIST)
+	for (int i = 0; i < MAX_RAY_STEPS; i++)
 	{
-		float d = map(ro + rd * t);
-		shade = min(shade, SHADOW_SMOOTH * d / t);
-		t += clamp(d, INIT_T, INIT_RES);
-		if (d < MIN_DIST || t > MAX_DIST) break;
-		i++;
+		float h = map(ro + rd * t).x;
+		res = min(res, SHADOW_SMOOTH * h / t);
+		t += clamp(h, INIT_T, INIT_RES);
+		if (h < MIN_DIST || t > MAX_DIST) break;
 	}
 
-	return clamp(shade, 0.0, 1.0);
+	return clamp(res, 0.0, 1.0);
 
 }
 
@@ -148,16 +179,17 @@ vec3 calcNormal(in vec3 pos)
 {
 	vec3 eps = vec3(0.001, 0.0, 0.0);
 	vec3 nor = vec3(
-		map(pos + eps.xyy) - map(pos - eps.xyy),
-		map(pos + eps.yxy) - map(pos - eps.yxy),
-		map(pos + eps.yyx) - map(pos - eps.yyx));
+		map(pos + eps.xyy).x - map(pos - eps.xyy).x,
+		map(pos + eps.yxy).x - map(pos - eps.yxy).x,
+		map(pos + eps.yyx).x - map(pos - eps.yyx).x);
 	return normalize(nor);
 }
 
 vec3 render(in vec3 ro, in vec3 rd)
 {
 	vec3 col = vec3(1.0);
-	float t = castRay(ro, rd);
+	vec2 res = castRay(ro, rd);
+	float t = res.x;
 	vec3 pos = ro + t * rd;
 	vec3 nor = calcNormal(pos);
 	vec3 ref = reflect(rd, nor);
