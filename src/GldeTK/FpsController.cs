@@ -10,10 +10,10 @@ namespace GldeTK
         /// <summary>
         /// 0.1 is slower than 0.9
         /// </summary>
-        float mouse_sensitivity = 0.10f;
+        float mouse_sensitivity = 0.20f;
 
         /// <summary>
-        /// From 1 to 100. 15 by default
+        /// From 1 to 100. 20 by default
         /// </summary>
         public float MouseSensitivity
         {

@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Timers;
 
 namespace GldeTK
 {
@@ -14,9 +15,10 @@ namespace GldeTK
         const string FRAGMENT_FILENAME = "GldeTK.shaders.fragment.c";
         const string VERTEX_FILENAME = "GldeTK.shaders.vertex.c";
         const string GEOMETRY_FILENAME = "GldeTK.shaders.geometry.c";
-        const string RELEASE_DATE = "30 Dec 2017";
+        const string RELEASE_DATE = "09 Jan 2018";
         const string UBO_SDELEMENTSMAP_BLOCKNAME = "SdElements";
         const int UBO_SDELEMENTSMAP_BLOCKCOUNT = 256;
+        const float INPUT_UPDATE_INTERVAL = 10; // every ms
 
         Camera camera;
         FpsController fpsController;
@@ -35,6 +37,8 @@ namespace GldeTK
             um3_CamProj,
             ubo_GlobalMap;
 
+        Timer timer;
+
         public MainWindow()
         {
             Title = APP_NAME;
@@ -50,6 +54,59 @@ namespace GldeTK
 
             phy = new Physics();
             fpsController = new FpsController();
+
+            timer = new Timer(INPUT_UPDATE_INTERVAL);
+            timer.Elapsed += Timer_Elapsed;
+            lastTicks = DateTime.Now.Ticks;
+            timer.Enabled = true;
+        }
+
+        long lastTicks;
+        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            float delta = (e.SignalTime.Ticks - lastTicks) / 10000000.0f;
+            lastTicks = e.SignalTime.Ticks;
+
+            // update player input (keyboard_wasd+space+shift + mouse-look)
+            Ray motionStep = fpsController.Update(delta, camera.RayCopy);
+
+            float sd = 0f;
+
+            // gravity free fall
+            Vector3 freeFallVector = phy.Gravity(
+                delta,
+                camera.RayCopy,
+                player_hitRadius,
+                motionStep.Origin.Y > 0
+                );
+
+            motionStep.Origin += freeFallVector;
+
+            // wall collide
+            sd = phy.CastRay(
+                camera.Origin,
+                Vector3.NormalizeFast(motionStep.Origin)
+                );
+
+            // when hit the wall
+            if (sd <= player_hitRadius)
+            {
+                camera.Target = motionStep.Target;    // view only
+
+                // smooth wall sliding
+                Vector3 hitPoint = camera.Origin + motionStep.Origin * player_hitRadius;
+                Vector3 norm = phy.GetSurfaceNormal(hitPoint);
+                Vector3 invNorm = -norm;
+                invNorm *= (motionStep.Origin * norm).LengthFast;
+
+                motionStep.Origin -= invNorm;
+            }
+
+            camera.Translate(motionStep);
+
+            var keyboard = Keyboard.GetState();
+            UpdateWindowKeys(keyboard);
+            lastKeyboard = keyboard;
         }
 
         protected override void OnLoad(EventArgs e)
@@ -172,53 +229,11 @@ namespace GldeTK
             GL.Viewport(0, 0, Width, Height);
         }
 
-        float player_hitRadius = 1.0f;   // TODO change later
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-            float delta = (float)e.Time;
-
-            // update player input (keyboard_wasd+space+shift + mouse-look)
-            Ray motionStep = fpsController.Update(delta, camera.RayCopy);
-
-            float sd = 0f;
-
-            // gravity free fall
-            Vector3 freeFallVector = phy.Gravity(
-                delta,
-                camera.RayCopy,
-                player_hitRadius,
-                motionStep.Origin.Y > 0
-                );
-
-            motionStep.Origin += freeFallVector;
-
-            // wall collide
-            sd = phy.CastRay(
-                camera.Origin,
-                Vector3.NormalizeFast(motionStep.Origin)
-                );
-
-            // when hit the wall
-            if (sd <= player_hitRadius)
-            {   
-                camera.Target = motionStep.Target;    // view only
-
-                // smooth wall sliding
-                Vector3 hitPoint = camera.Origin + motionStep.Origin * player_hitRadius;
-                Vector3 norm = phy.GetSurfaceNormal(hitPoint);
-                Vector3 invNorm = -norm;
-                invNorm *= (motionStep.Origin * norm).LengthFast;
-
-                motionStep.Origin -= invNorm;
-            }
-
-            camera.Translate(motionStep);
-
-            var keyboard = Keyboard.GetState();
-            UpdateWindowKeys(keyboard);
-            lastKeyboard = keyboard;
         }
 
+        float player_hitRadius = 1.0f;   // TODO change later
         KeyboardState lastKeyboard = new KeyboardState();
         private void UpdateWindowKeys(KeyboardState keyboard)
         {
