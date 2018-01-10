@@ -100,23 +100,27 @@ namespace GldeTK
         {
             float d = SdPlaneY(pos);
 
-            Vector3 posRepeat = OpRep(pos, new Vector3(10f, 10f + (float)Math.Sin(GlobalTime), 10f));
-
             d = OpA(
                     d,
-                    SdSphere(posRepeat, 1.0f));
+                    SdSphere(pos, 2.0f));
 
-            posRepeat = OpRep(pos, new Vector3(7f, 0f, 9f));
+            //Vector3 posRepeat = OpRep(pos, new Vector3(10f, 10f + (float)Math.Sin(GlobalTime), 10f));
 
-            d = OpA(
-                    d,
-                    SdBox(posRepeat, new Vector3(1.0f, 2.0f, 1.0f)));
+            //d = OpA(
+            //        d,
+            //        SdSphere(posRepeat, 1.0f));
 
-            posRepeat = OpRep(pos, new Vector3(12f, 0f, 13f));
+            //posRepeat = OpRep(pos, new Vector3(7f, 0f, 9f));
 
-            d = OpA(
-                    d,
-                    SdCylinder(posRepeat, 1.0f, 30.0f));
+            //d = OpA(
+            //        d,
+            //        SdBox(posRepeat, new Vector3(1.0f, 2.0f, 1.0f)));
+
+            //posRepeat = OpRep(pos, new Vector3(12f, 0f, 13f));
+
+            //d = OpA(
+            //        d,
+            //        SdCylinder(posRepeat, 1.0f, 30.0f));
 
             return d;
         }

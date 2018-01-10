@@ -56,26 +56,31 @@ float map(in vec3 pos)
 {
 	float d = sdPlaneY(pos);
 
-	vec3 prep = opRep(pos, vec3(10, 10.0 + sin(iGlobalTime), 10));
-
 	d =
 		opA(
 			d,
-			sdSphere(prep, g_map[0].x));
-	
-	prep = opRep(pos, vec3(7.0, 0.0, 9.0));
+			sdSphere(pos, 2.0));
 
-	d =
-		opA(
-			d,
-			sdBox(prep, g_map[0].yzw));
+	//vec3 prep = opRep(pos, vec3(10, 10.0 + sin(iGlobalTime), 10));
 
-	prep = opRep(pos, vec3(12.0, 0.0, 13.0));
+	//d =
+	//	opA(
+	//		d,
+	//		sdSphere(prep, g_map[0].x));
+	//
+	//prep = opRep(pos, vec3(7.0, 0.0, 9.0));
 
-	d =
-		opA(
-			d,
-			sdCylinder(prep, 1.0, 30.0));
+	//d =
+	//	opA(
+	//		d,
+	//		sdBox(prep, g_map[0].yzw));
+
+	//prep = opRep(pos, vec3(12.0, 0.0, 13.0));
+
+	//d =
+	//	opA(
+	//		d,
+	//		sdCylinder(prep, 1.0, 30.0));
 
 	return d;
 }

@@ -47,8 +47,8 @@ namespace GldeTK
             Height = 768;
 
             camera = new Camera(
-                    new Vector3(0, 1, 0),
-                    new Vector3(0, 0, -1),
+                    new Vector3(3, 1, 0),
+                    new Vector3(-1, 0, 0),
                     new Vector3(0, 1, 0)
                     );
 

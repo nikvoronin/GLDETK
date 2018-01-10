@@ -91,7 +91,7 @@ namespace GldeTK
                 pitch = -MathHelper.PiOver2 + EPS;
 
             /// Sets new Front of the Camera. Angles must be in radians.
-            nextStep.SetTarget(yaw, pitch);
+            nextStep.SetTarget(yaw + MathHelper.Pi, pitch);
         }
     }
 }
