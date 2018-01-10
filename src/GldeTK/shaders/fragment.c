@@ -56,7 +56,7 @@ float map(in vec3 pos)
 {
 	float d = sdPlaneY(pos);
 
-	vec3 prep = opRep(pos, vec3(10.0));
+	vec3 prep = opRep(pos, vec3(10, 10.0 + sin(iGlobalTime), 10));
 
 	d =
 		opA(
@@ -134,14 +134,16 @@ float softshadow(in vec3 ro, in vec3 rd)
 	while (i < MAX_RAY_STEPS && t < MAX_DIST)
 	{
 		float d = map(ro + rd * t);
+
 		shade = min(shade, SHADOW_SMOOTH * d / t);
 		t += clamp(d, INIT_T, INIT_RES);
-		if (d < MIN_DIST || t > MAX_DIST) break;
+
+		if (d < MIN_DIST || t > MAX_DIST)
+			break;
 		i++;
 	}
 
 	return clamp(shade, 0.0, 1.0);
-
 }
 
 vec3 calcNormal(in vec3 pos)
@@ -164,7 +166,6 @@ vec3 render(in vec3 ro, in vec3 rd)
 
 	// lighitng        
 	vec3  lig = normalize(vec3(cos(iGlobalTime *0.1), abs(sin(iGlobalTime *0.1)), cos(iGlobalTime *0.1) * sin(iGlobalTime *0.1)));
-	//vec3  lig = normalize(vec3(-0.6, 0.7, -0.5));
 	float amb = clamp(0.5 + 0.5 * nor.y, 0.0, 1.0);
 	float dif = clamp(dot(nor, lig), 0.0, 1.0);
 	float spe = pow(clamp(dot(ref, lig), 0.0, 1.0), 16.0);
@@ -182,17 +183,6 @@ vec3 render(in vec3 ro, in vec3 rd)
 	return vec3(clamp(col, 0.0, 1.0));
 }
 
-mat3 setCamera(in vec3 ro, in vec3 ta)
-{
-	const vec3 up = vec3(0.0, 1.0, 0.0);
-
-	vec3 cw = normalize(ta - ro);
-	vec3 cu = normalize(cross(cw, up));
-	vec3 cv = normalize(cross(cu, cw));
-
-	return mat3(cu, cv, cw);
-}
-
 void main(void)
 {
 	// ray direction
@@ -203,6 +193,6 @@ void main(void)
 
 	vec3 col = render(ro, rd);
 
-		col = pow(col, vec3(0.8545)); // tint
+	col = pow(col, vec3(0.8545)); // tint
 	gl_FragColor = vec4(col, 1.0);
 }

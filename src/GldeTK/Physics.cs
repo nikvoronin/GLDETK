@@ -5,6 +5,8 @@ namespace GldeTK
 {
     public class Physics
     {
+        public float GlobalTime = 0;
+
         // Utils ----------------------------------------------------------------------
         Vector3 AbsV3(Vector3 v)
         {
@@ -98,7 +100,7 @@ namespace GldeTK
         {
             float d = SdPlaneY(pos);
 
-            Vector3 posRepeat = OpRep(pos, new Vector3(10.0f));
+            Vector3 posRepeat = OpRep(pos, new Vector3(10f, 10f + (float)Math.Sin(GlobalTime), 10f));
 
             d = OpA(
                     d,

@@ -66,6 +66,7 @@ namespace GldeTK
         {
             float delta = (e.SignalTime.Ticks - lastTicks) / 10000000.0f;
             lastTicks = e.SignalTime.Ticks;
+            phy.GlobalTime += delta;
 
             // update player input (keyboard_wasd+space+shift + mouse-look)
             Ray motionStep = fpsController.Update(delta, camera.RayCopy);
@@ -92,7 +93,6 @@ namespace GldeTK
             if (sd <= player_hitRadius)
             {
                 camera.Target = motionStep.Target;    // view only
-
                 // smooth wall sliding
                 Vector3 hitPoint = camera.Origin + motionStep.Origin * player_hitRadius;
                 Vector3 norm = phy.GetSurfaceNormal(hitPoint);
@@ -229,10 +229,6 @@ namespace GldeTK
             GL.Viewport(0, 0, Width, Height);
         }
 
-        protected override void OnUpdateFrame(FrameEventArgs e)
-        {
-        }
-
         float player_hitRadius = 1.0f;   // TODO change later
         KeyboardState lastKeyboard = new KeyboardState();
         private void UpdateWindowKeys(KeyboardState keyboard)
@@ -263,27 +259,21 @@ namespace GldeTK
             } // if state F11
         } // UpdateWindowKeys()
 
-        float iGlobalTime = 0;
         double s1_timer = 0;    // smooth fps printing
-
-        void DoTimers(float delta)
-        {
-            iGlobalTime += delta;
-
-            if (iGlobalTime - s1_timer > 1)
-            {
-                Title = $"{APP_NAME}, {RELEASE_DATE} — {(delta * 1000).ToString("0.")}ms, {(1 / delta).ToString("0")}fps // {camera.Origin.X.ToString("0.0")} : {camera.Origin.Y.ToString("0.0")} : {camera.Origin.Z.ToString("0.0")} ";
-                s1_timer = iGlobalTime;
-            }
-        }
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            DoTimers((float)e.Time);
+            float delta = (float)e.Time;
+
+            if (phy.GlobalTime - s1_timer > 1)
+            {
+                Title = $"{APP_NAME}, {RELEASE_DATE} — {(delta * 1000).ToString("0.")}ms, {(1 / delta).ToString("0")}fps // {camera.Origin.X.ToString("0.0")} : {camera.Origin.Y.ToString("0.0")} : {camera.Origin.Z.ToString("0.0")} ";
+                s1_timer = phy.GlobalTime;
+            }
 
             GL.UseProgram(h_shaderProgram);
 
-            GL.Uniform1(uf_iGlobalTime, iGlobalTime);
+            GL.Uniform1(uf_iGlobalTime, phy.GlobalTime);
             GL.Uniform3(uf_iResolution, Width, Height, 0.0f);
             GL.Uniform3(uf_CamRo, camera.Origin);
             GL.UniformMatrix3(um3_CamProj, false, ref camera.Projection);
@@ -316,6 +306,8 @@ namespace GldeTK
 
         protected override void OnUnload(EventArgs e)
         {
+            timer.Enabled = false;
+
             GL.DeleteBuffers(1, ref ubo_GlobalMap);
             GL.DeleteProgram(h_shaderProgram);
             RemoveShader(h_shaderProgram, h_vertex);
