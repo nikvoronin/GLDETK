@@ -34,15 +34,11 @@ namespace GldeTK
 
         Vector3 Mod3(Vector3 v1, Vector3 v2)
         {
-            if (v2.X == 0)
-                v2.X = float.MinValue;
-            if (v2.Y == 0)
-                v2.Y = float.MinValue;
-            if (v2.Z == 0)
-                v2.Z = float.MinValue;
-
             return
-                new Vector3(Math.Abs(v1.X % v2.X), Math.Abs(v1.Y % v2.Y), Math.Abs(v1.Z % v2.Z));
+                new Vector3(
+                    Math.Abs(v1.X % (v2.X != 0 ? v2.X : float.MinValue)),
+                    Math.Abs(v1.Y % (v2.Y != 0 ? v2.Y : float.MinValue)),
+                    Math.Abs(v1.Z % (v2.Z != 0 ? v2.Z : float.MinValue)));
         }
 
         // Signed Distance Functions ----------------------------------------------------------------------
@@ -102,7 +98,9 @@ namespace GldeTK
 
             d = OpA(
                     d,
-                    SdSphere(pos, 2.0f));
+                    SdBox(
+                        new Vector3(pos.X, pos.Y - 1.0f, pos.Z),
+                        new Vector3(1.0f)));
 
             //Vector3 posRepeat = OpRep(pos, new Vector3(10f, 10f + (float)Math.Sin(GlobalTime), 10f));
 
@@ -152,8 +150,8 @@ namespace GldeTK
         public float CastRay(Vector3 ro, Vector3 rd)
         {
             //TODO move to external constants w/ uniq names
-            const int MAX_RAY_STEPS = 10;
-            const float MIN_DIST = 0.01f;
+            const int MAX_RAY_STEPS = 16;
+            const float MIN_DIST = 0.1f;
             float MAX_DIST = 100;
 
             float t = 0.0f;
@@ -163,11 +161,10 @@ namespace GldeTK
             {
 
                 h = Map(ro + rd * t);
+                t += h;
 
                 if (h < MIN_DIST || t > MAX_DIST)
                     break;
-
-                t += h;
             }
 
             return t;

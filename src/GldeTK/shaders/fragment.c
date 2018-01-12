@@ -59,7 +59,7 @@ float map(in vec3 pos)
 	d =
 		opA(
 			d,
-			sdSphere(pos, 2.0));
+			sdBox(vec3(pos.x, pos.y - 1.0, pos.z), vec3(1.0)));
 
 	//vec3 prep = opRep(pos, vec3(10, 10.0 + sin(iGlobalTime), 10));
 
@@ -106,7 +106,6 @@ float castRay(in vec3 ro, in vec3 rd)
 			overstep = d * min(1.0, 0.5 * d / phx);
 			t += d * 0.5 + overstep;
 			phx = d;
-			i++;
 		}
 		else
 		{
@@ -118,6 +117,8 @@ float castRay(in vec3 ro, in vec3 rd)
 
 		if (d < MIN_DIST || t > MAX_DIST)
 			break;
+
+		i++;
 	}
 
 	return t;
@@ -129,7 +130,7 @@ float softshadow(in vec3 ro, in vec3 rd)
 	const float INIT_T = 0.02;
 	const float INIT_RES = 0.1;
 	const float MAX_DIST = 25;
-	const float MIN_DIST = 0.001;
+	const float MIN_DIST = 0.0002;
 	const int MAX_RAY_STEPS = 64;		// higher -> longer shadow distance
 	const float SHADOW_SMOOTH = 8.0;	// lower ~ smother, higher -> sharper
 
@@ -161,6 +162,23 @@ vec3 calcNormal(in vec3 pos)
 	return normalize(nor);
 }
 
+float AO(in vec3 pos, in vec3 nor)
+{
+	float occ = 0.0;
+	float sca = 1.0;
+
+	for (int i = 0; i < 5; i++)
+	{
+		float hr = 0.01 + 0.12 * float(i) / 4.0;
+		vec3 aopos = nor * hr + pos;
+		float dd = map(aopos);
+		occ += -(dd - hr) * sca;
+		sca *= 0.95;
+	}
+
+	return clamp(1.0 - 3.0 * occ, 0.0, 1.0);
+}
+
 vec3 render(in vec3 ro, in vec3 rd)
 {
 	vec3 col = vec3(1.0);
@@ -169,18 +187,33 @@ vec3 render(in vec3 ro, in vec3 rd)
 	vec3 nor = calcNormal(pos);
 	vec3 ref = reflect(rd, nor);
 
+	// materials|textures
+	const float ELSIZE = 0.5;
+	/// pattern
+	float mat = mod(floor(ELSIZE * pos.z) + floor(ELSIZE * pos.x), 2.0);
+	/// circles
+	const float CIRCLE_SMOOTH = 0.001;
+	const float CIRCLE_RADIUS = 0.3;
+	mat *= smoothstep(CIRCLE_RADIUS - CIRCLE_SMOOTH, CIRCLE_RADIUS, length(fract(ELSIZE * pos) - 0.5));
+	col *= 0.4 + mat;
+
+	//float occ = AO(pos, nor);
+
 	// lighitng        
 	vec3  lig = normalize(vec3(cos(iGlobalTime *0.1), abs(sin(iGlobalTime *0.1)), cos(iGlobalTime *0.1) * sin(iGlobalTime *0.1)));
 	float amb = clamp(0.5 + 0.5 * nor.y, 0.0, 1.0);
 	float dif = clamp(dot(nor, lig), 0.0, 1.0);
 	float spe = pow(clamp(dot(ref, lig), 0.0, 1.0), 16.0);
+	//float dom = smoothstep(-0.1, 0.1, ref.y);
 
 	dif *= softshadow(pos, lig);
+	//dom *= softshadow(pos, ref);
 
 	vec3 lin = vec3(0.0);
 	lin += dif;
-	lin += 1.20 * spe *dif;
-	lin += 0.20 * amb;
+	lin += 1.20 * spe * dif;
+	lin += 0.20 * amb;// *occ;
+	//lin += 0.30 * dom * occ; // mirrors
 	col *= lin;
 
 	col = mix(col, vec3(0.8, 0.9, 1.0), 1.0 - exp(-0.002 * t * t));	// distance fog
