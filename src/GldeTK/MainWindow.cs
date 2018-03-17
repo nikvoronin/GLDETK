@@ -15,7 +15,7 @@ namespace GldeTK
         const string FRAGMENT_FILENAME = "GldeTK.shaders.fragment.c";
         const string VERTEX_FILENAME = "GldeTK.shaders.vertex.c";
         const string GEOMETRY_FILENAME = "GldeTK.shaders.geometry.c";
-        const string RELEASE_DATE = "09 Jan 2018";
+        const string RELEASE_DATE = "29 Jan 2018";
         const string UBO_SDELEMENTSMAP_BLOCKNAME = "SdElements";
         const int UBO_SDELEMENTSMAP_BLOCKCOUNT = 256;
         const float INPUT_UPDATE_INTERVAL = 10; // every ms
@@ -240,21 +240,19 @@ namespace GldeTK
             {
                 if (WindowState == WindowState.Fullscreen)
                 {
+                    WindowState = WindowState.Normal;
+                    CursorVisible = true;
                     DisplayDevice
                         .GetDisplay(DisplayIndex.Default)
                         .RestoreResolution();
-
-                    WindowState = WindowState.Normal;
-                    CursorVisible = true;
                 }
                 else
                 {
+                    WindowState = WindowState.Fullscreen;
+                    CursorVisible = false;
                     DisplayDevice
                         .GetDisplay(DisplayIndex.Default)
                         .ChangeResolution(FULLSCREEN_W, FULLSCREEN_H, 32, 60);
-
-                    WindowState = WindowState.Fullscreen;
-                    CursorVisible = false;
                 }
             } // if state F11
         } // UpdateWindowKeys()

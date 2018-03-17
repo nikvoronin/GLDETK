@@ -75,7 +75,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="shaders\fragment.c" />
+    <EmbeddedResource Include="shaders\fragment_checker_texture.c" />
     <EmbeddedResource Include="shaders\fragment_jump.c" />
     <EmbeddedResource Include="shaders\fragment_machine.c" />
     <EmbeddedResource Include="shaders\fragment_menger.c" />
@@ -85,7 +85,7 @@
     <EmbeddedResource Include="shaders\fragment_menger_valley.c" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="shaders\fragment_classic.c" />
+    <EmbeddedResource Include="shaders\fragment.c" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
