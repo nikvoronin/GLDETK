@@ -175,6 +175,11 @@ float softshadow(in vec3 ro, in vec3 rd)
 
 }
 
+//vec3 calcNormal2(in vec3 p)
+//{
+//	return normalize(cross(dFdx(p), dFdy(p)));
+//}
+
 vec3 calcNormal(in vec3 pos)
 {
 	vec3 eps = vec3(0.001, 0.0, 0.0);
@@ -194,7 +199,7 @@ vec3 render(in vec3 ro, in vec3 rd)
 	vec3 nor = calcNormal(pos);
 	vec3 ref = reflect(rd, nor);
 
-	// lighitng        
+	// lighitng
 	vec3  lig = normalize(vec3(cos(iGlobalTime *0.1), abs(sin(iGlobalTime *0.1)), cos(iGlobalTime *0.1) * sin(iGlobalTime *0.1)));
 	//vec3  lig = normalize(vec3(-0.6, 0.7, -0.5));
 	float amb = clamp(0.5 + 0.5 * nor.y, 0.0, 1.0);
@@ -210,7 +215,7 @@ vec3 render(in vec3 ro, in vec3 rd)
 	col *= lin;
 
 	col = mix(col, vec3(0.8, 0.9, 1.0), 1.0 - exp(-0.002 * t * t));	// distance fog
-
+	
 	return vec3(clamp(col, 0.0, 1.0));
 }
 
@@ -235,6 +240,6 @@ void main(void)
 
 	vec3 col = render(ro, rd);
 
-		col = pow(col, vec3(0.8545)); // tint
+	col = pow(col, vec3(0.8545)); // tint
 	gl_FragColor = vec4(col, 1.0);
 }
