@@ -71,8 +71,6 @@ namespace GldeTK
             // update player input (keyboard_wasd+space+shift + mouse-look)
             Ray motionStep = fpsController.Update(delta, camera.RayCopy);
 
-            float sd = 0f;
-
             // gravity free fall
             Vector3 freeFallVector = phy.Gravity(
                 delta,
@@ -84,7 +82,7 @@ namespace GldeTK
             motionStep.Origin += freeFallVector;
 
             // wall collide
-            sd = phy.CastRay(
+            float sd = phy.CastRay(
                 camera.Origin,
                 Vector3.NormalizeFast(motionStep.Origin)
                 );
