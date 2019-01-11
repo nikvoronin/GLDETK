@@ -158,7 +158,7 @@ float softshadow(in vec3 ro, in vec3 rd)
 	const float INIT_RES = 0.1;
 	const float MAX_DIST = 25;
 	const float MIN_DIST = 0.001;
-	const int MAX_RAY_STEPS = 64;		// higher -> longer shadow distance
+	const int MAX_RAY_STEPS = 256;		// higher -> longer shadow distance
 	const float SHADOW_SMOOTH = 8.0;	// lower ~ smother, higher -> sharper
 
 	float res = 1.0;

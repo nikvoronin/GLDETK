@@ -11,21 +11,9 @@ namespace GldeTK
 {
     public class MainWindow : GameWindow
     {
-        const string APP_NAME = "GldeTK";
-        const string FRAGMENT_FILENAME = "GldeTK.shaders.fragment.c";
-        const string VERTEX_FILENAME = "GldeTK.shaders.vertex.c";
-        const string GEOMETRY_FILENAME = "GldeTK.shaders.geometry.c";
-        const string RELEASE_DATE = "29 Jan 2018";
-        const string UBO_SDELEMENTSMAP_BLOCKNAME = "SdElements";
-        const int UBO_SDELEMENTSMAP_BLOCKCOUNT = 256;
-        const float INPUT_UPDATE_INTERVAL = 10; // every ms
-
         Camera camera;
         FpsController fpsController;
         Physics phy;
-
-        int FULLSCREEN_W = 1920,
-            FULLSCREEN_H = 1080;
 
         int h_vertex,
             h_fragment,
@@ -41,10 +29,10 @@ namespace GldeTK
 
         public MainWindow()
         {
-            Title = APP_NAME;
+            Title = Const.APP_NAME;
             VSync = VSyncMode.Adaptive;
-            Width = 1024;
-            Height = 768;
+            Width = Const.DISPLAY_XGA_W;
+            Height = Const.DISPLAY_XGA_H;
 
             camera = new Camera(
                     new Vector3(3, 1, 0),
@@ -55,7 +43,7 @@ namespace GldeTK
             phy = new Physics();
             fpsController = new FpsController();
 
-            timer = new Timer(INPUT_UPDATE_INTERVAL);
+            timer = new Timer(Const.INPUT_UPDATE_INTERVAL);
             timer.Elapsed += Timer_Elapsed;
             lastTicks = DateTime.Now.Ticks;
             timer.Enabled = true;
@@ -75,7 +63,7 @@ namespace GldeTK
             Vector3 freeFallVector = phy.Gravity(
                 delta,
                 camera.RayCopy,
-                player_hitRadius,
+                Const.PLAYER_HIT_RADIUS,
                 motionStep.Origin.Y > 0
                 );
 
@@ -88,11 +76,11 @@ namespace GldeTK
                 );
 
             // when hit the wall
-            if (sd <= player_hitRadius)
+            if (sd <= Const.PLAYER_HIT_RADIUS)
             {
                 camera.Target = motionStep.Target;    // view only
                 // smooth wall sliding
-                Vector3 hitPoint = camera.Origin + motionStep.Origin * player_hitRadius;
+                Vector3 hitPoint = camera.Origin + motionStep.Origin * Const.PLAYER_HIT_RADIUS;
                 Vector3 norm = phy.GetSurfaceNormal(hitPoint);
                 Vector3 invNorm = -norm;
                 invNorm *= (motionStep.Origin * norm).LengthFast;
@@ -134,8 +122,8 @@ namespace GldeTK
             h_vertex = GL.CreateShader(ShaderType.VertexShader);
             h_fragment = GL.CreateShader(ShaderType.FragmentShader);
 
-            GL.ShaderSource(h_vertex, LoadEmbeddedFile(VERTEX_FILENAME));
-            GL.ShaderSource(h_fragment, LoadEmbeddedFile(FRAGMENT_FILENAME));
+            GL.ShaderSource(h_vertex, LoadEmbeddedFile(Const.VERTEX_FILENAME));
+            GL.ShaderSource(h_fragment, LoadEmbeddedFile(Const.FRAGMENT_FILENAME));
 
             GL.CompileShader(h_vertex);
             GL.CompileShader(h_fragment);
@@ -153,10 +141,10 @@ namespace GldeTK
             GL.UseProgram(h_shaderProgram);
             CreateMapUbo();
 
-            uf_iGlobalTime = GetUniformLocation("iGlobalTime");
-            uf_iResolution = GetUniformLocation("iResolution");
-            uf_CamRo = GetUniformLocation("ro");
-            um3_CamProj = GetUniformLocation("camProj");
+            uf_iGlobalTime = GetUniformLocation(Const.UF_TIMER);
+            uf_iResolution = GetUniformLocation(Const.UF_RESOLUTION);
+            uf_CamRo = GetUniformLocation(Const.UF_RAY_ORIGIN);
+            um3_CamProj = GetUniformLocation(Const.UF_PROJECTION_MATRIX);
         }
 
         /// <summary>
@@ -174,7 +162,7 @@ namespace GldeTK
         private void CreateMapUbo()
         {
             int binding_point = 1;
-            int block_index = GL.GetUniformBlockIndex(h_shaderProgram, UBO_SDELEMENTSMAP_BLOCKNAME);
+            int block_index = GL.GetUniformBlockIndex(h_shaderProgram, Const.UBO_SDELEMENTSMAP_BLOCKNAME);
             GL.UniformBlockBinding(h_shaderProgram, block_index, binding_point);
 
             // Allocate space for the buffer
@@ -227,7 +215,6 @@ namespace GldeTK
             GL.Viewport(0, 0, Width, Height);
         }
 
-        float player_hitRadius = 1.0f;   // TODO change later
         KeyboardState lastKeyboard = new KeyboardState();
         private void UpdateWindowKeys(KeyboardState keyboard)
         {
@@ -236,21 +223,23 @@ namespace GldeTK
 
             if (keyboard[Key.F11] && (lastKeyboard[Key.F11] != keyboard[Key.F11]))
             {
+                DisplayDevice defaultDisplayDevice = DisplayDevice.GetDisplay(DisplayIndex.Default);
+
                 if (WindowState == WindowState.Fullscreen)
                 {
                     WindowState = WindowState.Normal;
                     CursorVisible = true;
-                    DisplayDevice
-                        .GetDisplay(DisplayIndex.Default)
-                        .RestoreResolution();
+                    defaultDisplayDevice.RestoreResolution();
                 }
                 else
                 {
                     WindowState = WindowState.Fullscreen;
                     CursorVisible = false;
-                    DisplayDevice
-                        .GetDisplay(DisplayIndex.Default)
-                        .ChangeResolution(FULLSCREEN_W, FULLSCREEN_H, 32, 60);
+                    defaultDisplayDevice
+                        .ChangeResolution(
+                            Const.DISPLAY_FULLHD_W, Const.DISPLAY_FULLHD_H,
+                            Const.DISPLAY_BITPERPIXEL,
+                            Const.DISPLAY_REFRESH_RATE);
                 }
             } // if state F11
         } // UpdateWindowKeys()
@@ -263,7 +252,7 @@ namespace GldeTK
 
             if (phy.GlobalTime - s1_timer > 1)
             {
-                Title = $"{APP_NAME}, {RELEASE_DATE} — {(delta * 1000).ToString("0.")}ms, {(1.0 / delta).ToString("0")}fps // {camera.Origin.X.ToString("0.0")} : {camera.Origin.Y.ToString("0.0")} : {camera.Origin.Z.ToString("0.0")} ";
+                Title = $"{Const.APP_NAME}, {Const.RELEASE_DATE} — {(delta * 1000).ToString("0.")}ms, {(1.0 / delta).ToString("0")}fps // {camera.Origin.X.ToString("0.0")} : {camera.Origin.Y.ToString("0.0")} : {camera.Origin.Z.ToString("0.0")} ";
                 s1_timer = phy.GlobalTime;
             }
 
