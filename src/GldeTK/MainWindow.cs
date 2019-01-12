@@ -1,10 +1,6 @@
 ﻿using OpenTK;
 using OpenTK.Input;
-using OpenTK.Graphics.OpenGL4;
 using System;
-using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Timers;
 
 namespace GldeTK
@@ -12,11 +8,11 @@ namespace GldeTK
     public class MainWindow : GameWindow
     {
         Camera camera;
-        FpsController fpsController;
-        Physics phy;
+        FpsController motionCtrl;
+        Physics physics;
         Render render;
 
-        Timer timer;
+        Timer inputUpdateTimer;
 
         public MainWindow()
         {
@@ -33,27 +29,27 @@ namespace GldeTK
                     new Vector3(0, 1, 0)
                     );
 
-            phy = new Physics();
-            fpsController = new FpsController();
+            physics = new Physics();
+            motionCtrl = new FpsController();
 
-            timer = new Timer(Const.INPUT_UPDATE_INTERVAL);
-            timer.Elapsed += Timer_Elapsed;
+            inputUpdateTimer = new Timer(Const.INPUT_UPDATE_INTERVAL);
+            inputUpdateTimer.Elapsed += UpdateInput;
             lastTicks = DateTime.Now.Ticks;
-            timer.Enabled = true;
+            inputUpdateTimer.Enabled = true;
         }
 
         long lastTicks;
-        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
+        private void UpdateInput(object sender, ElapsedEventArgs e)
         {
             float delta = (e.SignalTime.Ticks - lastTicks) / 10000000.0f;
             lastTicks = e.SignalTime.Ticks;
-            phy.GlobalTime += delta;
+            physics.GlobalTime += delta;
 
             // update player input (keyboard_wasd+space+shift + mouse-look)
-            Ray motionStep = fpsController.Update(delta, camera.RayCopy);
+            Ray motionStep = motionCtrl.Update(delta, camera.RayCopy);
 
             // gravity free fall
-            Vector3 freeFallVector = phy.Gravity(
+            Vector3 freeFallVector = physics.Gravity(
                 delta,
                 camera.RayCopy,
                 Const.PLAYER_HIT_RADIUS,
@@ -63,7 +59,7 @@ namespace GldeTK
             motionStep.Origin += freeFallVector;
 
             // wall collide
-            float sd = phy.CastRay(
+            float sd = physics.CastRay(
                 camera.Origin,
                 Vector3.NormalizeFast(motionStep.Origin)
                 );
@@ -74,7 +70,7 @@ namespace GldeTK
                 camera.Target = motionStep.Target;    // view only
                 // smooth wall sliding
                 Vector3 hitPoint = camera.Origin + motionStep.Origin * Const.PLAYER_HIT_RADIUS;
-                Vector3 norm = phy.GetSurfaceNormal(hitPoint);
+                Vector3 norm = physics.GetSurfaceNormal(hitPoint);
                 Vector3 invNorm = -norm;
                 invNorm *= (motionStep.Origin * norm).LengthFast;
 
@@ -95,7 +91,7 @@ namespace GldeTK
 
         protected override void OnResize(EventArgs e)
         {
-            render.OnResize(Width, Height);            
+            render.OnResize(Width, Height);
         }
 
         KeyboardState lastKeyboard = new KeyboardState();
@@ -133,21 +129,19 @@ namespace GldeTK
         {
             float delta = (float)e.Time;
 
-            if (phy.GlobalTime - s1_timer > 1)
+            if (physics.GlobalTime - s1_timer > 1)
             {
                 Title = $"{Const.APP_NAME}, {Const.RELEASE_DATE} — {(delta * 1000).ToString("0.")}ms, {(1.0 / delta).ToString("0")}fps // {camera.Origin.X.ToString("0.0")} : {camera.Origin.Y.ToString("0.0")} : {camera.Origin.Z.ToString("0.0")} ";
-                s1_timer = phy.GlobalTime;
+                s1_timer = physics.GlobalTime;
             }
 
-            render.OnFrame(phy.GlobalTime, Width, Height, camera);
-
+            render.OnFrame(physics.GlobalTime, Width, Height, camera);
             SwapBuffers();
         }
 
         protected override void OnUnload(EventArgs e)
         {
-            timer.Enabled = false;
-
+            inputUpdateTimer.Enabled = false;
             render.Stop();
 
             base.OnClosed(e);

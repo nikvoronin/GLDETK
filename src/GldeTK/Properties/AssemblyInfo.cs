@@ -4,7 +4,7 @@
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("GldeTK")]
-[assembly: AssemblyCopyright("Copyright © Nikolai Voronin 2016-2018")]
+[assembly: AssemblyCopyright("Copyright © Nikolai Voronin 2016-2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: AssemblyVersion("1.0.*")]
